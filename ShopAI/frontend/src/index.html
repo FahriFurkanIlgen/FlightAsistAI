@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ShopAsistAI - Widget Demo</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <!-- Simulated Shop Page Background -->
+  <div class="demo-page">
+    <div class="demo-header">
+      <h1>🛍️ E-Commerce Site Demo</h1>
+      <p>Widget sağ alt köşede açılır</p>
+    </div>
+    <div class="demo-content">
+      <p>Bu bir e-ticaret sitesi simülasyonudur. Sağ alt köşedeki chat butonuna tıklayarak ShopAsistAI widget'ını test edebilirsiniz.</p>
+    </div>
+  </div>
+
+  <!-- ShopAsistAI Chat Widget -->
+  <div id="chat-widget" class="chat-widget">
+    <div id="chat-toggle" class="chat-toggle">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+    </div>
+
+    <div id="chat-window" class="chat-window">
+      <div class="chat-header">
+        <div class="chat-header-content">
+          <img id="chat-logo" class="chat-header-logo" src="" alt="" style="display: none;">
+          <h3 id="chat-title">Alışveriş Asistanı</h3>
+        </div>
+        <button id="chat-close" class="chat-close">&times;</button>
+      </div>
+
+      <div class="chat-content">
+        <div id="welcome-section" class="welcome-section">
+          <h2 id="welcome-message">Hello, let's quickly find what you are looking for!</h2>
+          <p id="welcome-subtext">New season, combination suggestions and order support.</p>
+        </div>
+
+        <div id="category-section" class="category-section">
+          <div id="category-buttons" class="category-buttons"></div>
+        </div>
+        
+        <div id="chat-messages" class="chat-messages"></div>
+      </div>
+
+      <div id="product-suggestions" class="product-suggestions"></div>
+
+      <div class="chat-input-container">
+        <input 
+          type="text" 
+          id="chat-input" 
+          class="chat-input" 
+          placeholder="Type your message..."
+          autocomplete="off"
+        />
+        <button id="chat-send" class="chat-send">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+
+      <div id="privacy-footer" class="privacy-footer">
+        BY CHATTING, YOU AGREE TO OUR <a href="#" id="privacy-link" target="_blank">PRIVACY POLICY</a>
+        <button class="close-privacy" id="close-privacy">&times;</button>
+      </div>
+
+      <div id="branding-footer" class="branding-footer">
+        <span id="branding-text">Powered by ShopAsistAI</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="scripts/app.js"></script>
+</body>
+</html>
