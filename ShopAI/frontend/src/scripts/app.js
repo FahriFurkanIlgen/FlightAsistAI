@@ -22,6 +22,7 @@ class ChatWidget {
     this.chatToggle = document.getElementById('chat-toggle');
     this.chatWindow = document.getElementById('chat-window');
     this.chatClose = document.getElementById('chat-close');
+    this.chatContent = document.querySelector('.chat-content'); // Scrollable container
     this.chatMessages = document.getElementById('chat-messages');
     this.chatInput = document.getElementById('chat-input');
     this.chatSend = document.getElementById('chat-send');
@@ -137,6 +138,7 @@ class ChatWidget {
 
   async handleCategoryClick(btn) {
     const categoryId = btn.dataset.categoryId;
+    const categoryName = btn.querySelector('span:last-child').textContent;
     const keywords = btn.dataset.keywords.split(',').filter((k) => k);
 
     // Toggle active state
@@ -145,7 +147,7 @@ class ChatWidget {
     });
     btn.classList.add('active');
 
-    this.selectedCategory = categoryId;
+    this.selectedCategory = { id: categoryId, name: categoryName };
 
     // Fetch products for this category
     try {
@@ -165,27 +167,34 @@ class ChatWidget {
     } catch (error) {
       console.error('Error fetching category products:', error);
     }
-    this.brandingText = document.getElementById('branding-text');
   }
 
   attachEventListeners() {
     this.chatToggle.addEventListener('click', () => this.toggleChat());
     this.chatClose.addEventListener('click', () => this.toggleChat());
     this.chatSend.addEventListener('click', () => this.sendMessage());
-    this.chatInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && !this.isLoading) {
+    
+    // Auto-resize textarea as user types
+    this.chatInput.addEventListener('input', () => {
+      this.autoResizeTextarea();
+    });
+    
+    // Handle Enter key (Shift+Enter for new line, Enter to send)
+    this.chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !this.isLoading) {
+        e.preventDefault();
         this.sendMessage();
       }
     });
     
-    // Track user scroll behavior
-    this.chatMessages.addEventListener('scroll', () => {
+    // Track user scroll behavior on the CORRECT scrollable container
+    this.chatContent.addEventListener('scroll', () => {
       this.checkScrollPosition();
     });
   }
   
   checkScrollPosition() {
-    const container = this.chatMessages;
+    const container = this.chatContent; // Use chat-content, not chat-messages
     const threshold = 50; // 50px tolerance
     
     // Check if user is near bottom
@@ -193,6 +202,15 @@ class ChatWidget {
     
     // Update flag: true if user scrolled up (not at bottom)
     this.userScrolledUp = !isNearBottom;
+  }
+
+  autoResizeTextarea() {
+    // Reset height to auto to get the correct scrollHeight
+    this.chatInput.style.height = 'auto';
+    
+    // Set new height based on content (with max-height handled by CSS)
+    const newHeight = Math.min(this.chatInput.scrollHeight, 120);
+    this.chatInput.style.height = newHeight + 'px';
   }
 
   toggleChat() {
@@ -235,20 +253,81 @@ class ChatWidget {
     messageDiv.className = `message ${role}`;
     
     const p = document.createElement('p');
-    p.textContent = content;
-    messageDiv.appendChild(p);
     
-    this.chatMessages.appendChild(messageDiv);
-    
-    // Auto-scroll only if user hasn't manually scrolled up
-    this.scrollToBottomIfNeeded();
-    
-    // Add to history
+    // Add to history immediately
     this.conversationHistory.push({
       role: role === 'user' ? 'user' : 'assistant',
       content,
       timestamp: new Date(),
     });
+    
+    // For assistant messages, use typing effect
+    if (role === 'assistant') {
+      messageDiv.appendChild(p);
+      this.chatMessages.appendChild(messageDiv);
+      
+      // Return promise from typing animation
+      return this.typeMessage(p, content);
+    } else {
+      // User messages appear instantly
+      p.textContent = content;
+      messageDiv.appendChild(p);
+      this.chatMessages.appendChild(messageDiv);
+      this.scrollToBottomIfNeeded();
+      
+      // Return resolved promise for consistency
+      return Promise.resolve();
+    }
+  }
+
+  typeMessage(element, text, speed = 25) {
+    return new Promise((resolve) => {
+      let index = 0;
+      element.textContent = '';
+      
+      const type = () => {
+        if (index < text.length) {
+          element.textContent += text.charAt(index);
+          index++;
+          
+          // Smooth scroll during typing
+          this.scrollToBottomIfNeeded();
+          
+          // Continue typing
+          setTimeout(type, speed);
+        } else {
+          // Typing finished
+          resolve();
+        }
+      };
+      
+      type();
+    });
+  }
+
+  typeMessageWithCallback(element, text, speed = 25, callback) {
+    let index = 0;
+    element.textContent = '';
+    
+    const type = () => {
+      if (index < text.length) {
+        element.textContent += text.charAt(index);
+        index++;
+        
+        // Smooth scroll during typing
+        this.scrollToBottomIfNeeded();
+        
+        // Continue typing
+        setTimeout(type, speed);
+      } else {
+        // Typing finished, call callback
+        if (callback) {
+          setTimeout(callback, 100);
+        }
+      }
+    };
+    
+    type();
   }
 
   scrollToBottomIfNeeded() {
@@ -261,8 +340,8 @@ class ChatWidget {
   scrollToBottom() {
     // Use requestAnimationFrame for smoother scroll
     requestAnimationFrame(() => {
-      this.chatMessages.scrollTo({
-        top: this.chatMessages.scrollHeight,
+      this.chatContent.scrollTo({
+        top: this.chatContent.scrollHeight,
         behavior: 'smooth'
       });
       
@@ -304,14 +383,14 @@ class ChatWidget {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message assistant';
     
-    // Add intro text
+    // Add intro text with typing effect
     const introP = document.createElement('p');
-    introP.textContent = text;
     messageDiv.appendChild(introP);
     
-    // Add products container
+    // Add products container (initially hidden)
     const productsContainer = document.createElement('div');
     productsContainer.className = 'products-in-message';
+    productsContainer.style.display = 'none'; // Hide until text finishes
     productsContainer.innerHTML = products.map(product => {
       const specs = [];
       if (product.color) specs.push(product.color);
@@ -354,10 +433,17 @@ class ChatWidget {
     messageDiv.appendChild(productsContainer);
     this.chatMessages.appendChild(messageDiv);
     
-    // Scroll to bottom after displaying products (only if user hasn't scrolled up)
-    setTimeout(() => {
-      this.scrollToBottomIfNeeded();
-    }, 150);
+    // Type the intro text, then show products
+    this.typeMessageWithCallback(introP, text, 25, () => {
+      // After typing completes, show products with animation
+      productsContainer.style.display = 'flex';
+      productsContainer.style.opacity = '0';
+      setTimeout(() => {
+        productsContainer.style.transition = 'opacity 0.4s ease';
+        productsContainer.style.opacity = '1';
+        this.scrollToBottomIfNeeded();
+      }, 50);
+    });
   }
 
   displayProducts(products) {
@@ -384,6 +470,7 @@ class ChatWidget {
     // Add user message
     this.addMessage('user', message);
     this.chatInput.value = '';
+    this.autoResizeTextarea(); // Reset textarea height
     
     // Show loading
     this.isLoading = true;
@@ -412,10 +499,10 @@ class ChatWidget {
       // Remove loading
       this.removeLoading();
       
-      // Add AI response
-      this.addMessage('assistant', data.message);
+      // Add AI response and wait for typing to finish
+      await this.addMessage('assistant', data.message);
       
-      // Display recommended products in chat
+      // Display recommended products AFTER message typing completes
       if (data.recommendedProducts && data.recommendedProducts.length > 0) {
         this.addProductMessage(data.recommendedProducts);
       }

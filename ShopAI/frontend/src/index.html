@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ShopAsistAI - Widget Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
@@ -37,8 +40,8 @@
 
       <div class="chat-content">
         <div id="welcome-section" class="welcome-section">
-          <h2 id="welcome-message">Hello, let's quickly find what you are looking for!</h2>
-          <p id="welcome-subtext">New season, combination suggestions and order support.</p>
+          <h2 id="welcome-message">Merhaba, aradığınızı hızlıca bulalım!</h2>
+          <p id="welcome-subtext">Yeni sezon, kombinasyon önerileri ve sipariş desteği.</p>
         </div>
 
         <div id="category-section" class="category-section">
@@ -51,13 +54,13 @@
       <div id="product-suggestions" class="product-suggestions"></div>
 
       <div class="chat-input-container">
-        <input 
-          type="text" 
+        <textarea 
           id="chat-input" 
           class="chat-input" 
-          placeholder="Type your message..."
+          placeholder="Mesajınızı yazın..."
           autocomplete="off"
-        />
+          rows="1"
+        ></textarea>
         <button id="chat-send" class="chat-send">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="22" y1="2" x2="11" y2="13"></line>
@@ -67,7 +70,7 @@
       </div>
 
       <div id="privacy-footer" class="privacy-footer">
-        BY CHATTING, YOU AGREE TO OUR <a href="#" id="privacy-link" target="_blank">PRIVACY POLICY</a>
+        Sohbeti başlatarak veya sürdürerek <a href="#" id="privacy-link" target="_blank">Gizlilik Politikamızı</a> kabul ettiğinizi beyan etmiş olursunuz.
         <button class="close-privacy" id="close-privacy">&times;</button>
       </div>
 

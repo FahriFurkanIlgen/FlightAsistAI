@@ -169,8 +169,28 @@ export class CacheService {
     if (!products || !keywords || keywords.length === 0) return [];
 
     return products.filter((p) => {
-      const searchText = `${p.title} ${p.description} ${p.productType || ''} ${p.googleProductCategory || ''}`.toLowerCase();
-      return keywords.some((keyword) => searchText.includes(keyword.toLowerCase()));
+      // Prioritize gender and productType for category filtering
+      const genderText = (p.gender || '').toLowerCase();
+      const productTypeText = (p.productType || '').toLowerCase();
+      const titleText = (p.title || '').toLowerCase();
+      
+      // Check if any keyword matches in priority order
+      return keywords.some((keyword) => {
+        const lowerKeyword = keyword.toLowerCase();
+        
+        // For kids/children category, strictly check productType and gender
+        if (lowerKeyword === 'kids' || lowerKeyword === 'çocuk' || lowerKeyword === 'children') {
+          return productTypeText.includes('çocuk') || genderText.includes('çocuk');
+        }
+        
+        // For gender-specific categories (erkek/kadın)
+        if (lowerKeyword === 'erkek' || lowerKeyword === 'kadın') {
+          return genderText.includes(lowerKeyword) || productTypeText.includes(lowerKeyword);
+        }
+        
+        // For other categories, search in title and productType
+        return titleText.includes(lowerKeyword) || productTypeText.includes(lowerKeyword);
+      });
     });
   }
 
