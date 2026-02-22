@@ -164,17 +164,17 @@ export class CacheService {
     );
   }
 
-  public filterProductsByCategory(siteId: string, keywords: string[]): Product[] {
+  public async filterProductsByCategory(siteId: string, keywords: string[]): Promise<Product[]> {
     const products = this.getProducts(siteId);
     if (!products || !keywords || keywords.length === 0) return [];
 
-    return products.filter((p) => {
-      // Prioritize gender and productType for category filtering
+    // Step 1: Filter products by category using exact matching on productType and gender
+    const categoryFiltered = products.filter((p) => {
       const genderText = (p.gender || '').toLowerCase();
       const productTypeText = (p.productType || '').toLowerCase();
       const titleText = (p.title || '').toLowerCase();
+      const descriptionText = (p.description || '').toLowerCase();
       
-      // Check if any keyword matches in priority order
       return keywords.some((keyword) => {
         const lowerKeyword = keyword.toLowerCase();
         
@@ -188,10 +188,120 @@ export class CacheService {
           return genderText.includes(lowerKeyword) || productTypeText.includes(lowerKeyword);
         }
         
-        // For other categories, search in title and productType
-        return titleText.includes(lowerKeyword) || productTypeText.includes(lowerKeyword);
+        // For other categories (spor, athletic, running, etc.)
+        return titleText.includes(lowerKeyword) || 
+               productTypeText.includes(lowerKeyword) ||
+               descriptionText.includes(lowerKeyword);
       });
     });
+
+    console.log(`[CacheService] Category filter: ${keywords.join(', ')} -> ${categoryFiltered.length} products found`);
+
+    // Step 2: Deduplicate the filtered products
+    // Pick best variant based on discount and stock
+    const deduplicated = this.deduplicateProducts(categoryFiltered);
+    
+    console.log(`[CacheService] After deduplication: ${deduplicated.length} unique products`);
+
+    // Step 3: Sort by discount percentage (highest first)
+    deduplicated.sort((a, b) => {
+      const discountA = this.getDiscountPercentage(a);
+      const discountB = this.getDiscountPercentage(b);
+      
+      if (discountA !== discountB) {
+        return discountB - discountA; // Higher discount first
+      }
+      
+      // If same discount, prefer in-stock
+      const aInStock = a.availability === 'in stock' ? 1 : 0;
+      const bInStock = b.availability === 'in stock' ? 1 : 0;
+      
+      return bInStock - aInStock;
+    });
+
+    return deduplicated;
+  }
+
+  /**
+   * Deduplicate products by ID, keeping the best variant
+   * Prioritize: 1) Discount percentage 2) Stock availability 3) Size preference
+   */
+  private deduplicateProducts(products: Product[]): Product[] {
+    const productMap = new Map<string, Product>();
+    
+    for (const product of products) {
+      const baseId = this.extractBaseProductId(product.id);
+      const existing = productMap.get(baseId);
+      
+      if (!existing) {
+        productMap.set(baseId, product);
+        continue;
+      }
+      
+      // Keep the better variant
+      if (this.isBetterVariant(product, existing)) {
+        productMap.set(baseId, product);
+      }
+    }
+    
+    return Array.from(productMap.values());
+  }
+
+  /**
+   * Extract base product ID (remove size/color variants)
+   */
+  private extractBaseProductId(id: string): string {
+    // Remove common separators and keep the main ID
+    return id.split(/[\s-_]/)[0];
+  }
+
+  /**
+   * Determine if product A is better than product B
+   */
+  private isBetterVariant(productA: Product, productB: Product): boolean {
+    // 1. Prefer in-stock products
+    const aInStock = productA.availability === 'in stock';
+    const bInStock = productB.availability === 'in stock';
+    if (aInStock && !bInStock) return true;
+    if (!aInStock && bInStock) return false;
+    
+    // 2. Prefer higher discount percentage
+    const aDiscount = this.getDiscountPercentage(productA);
+    const bDiscount = this.getDiscountPercentage(productB);
+    if (aDiscount > bDiscount) return true;
+    if (aDiscount < bDiscount) return false;
+    
+    // 3. Prefer lower price (if both have same discount)
+    const aPrice = this.extractPrice(productA.salePrice || productA.price);
+    const bPrice = this.extractPrice(productB.salePrice || productB.price);
+    if (aPrice !== null && bPrice !== null && aPrice < bPrice) return true;
+    
+    return false;
+  }
+
+  /**
+   * Calculate discount percentage
+   */
+  private getDiscountPercentage(product: Product): number {
+    if (!product.salePrice || !product.price) return 0;
+    
+    const originalPrice = this.extractPrice(product.price);
+    const salePrice = this.extractPrice(product.salePrice);
+    
+    if (originalPrice === null || salePrice === null || originalPrice <= salePrice) return 0;
+    
+    return Math.round(((originalPrice - salePrice) / originalPrice) * 100);
+  }
+
+  /**
+   * Extract numeric price from price string
+   */
+  private extractPrice(priceStr: string): number | null {
+    const match = priceStr.match(/[\d.,]+/);
+    if (match) {
+      return parseFloat(match[0].replace(',', '.'));
+    }
+    return null;
   }
 
   /**

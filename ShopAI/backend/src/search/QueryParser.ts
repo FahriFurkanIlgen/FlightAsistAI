@@ -269,17 +269,31 @@ export class QueryParser {
    */
   private initializeCategoryKeywords(): void {
     this.categoryKeywords = new Map([
+      // Ayakkabı kategorileri
       ['sneaker', ['sneaker', 'sneker', 'spor ayakkabi']],
       ['ayakkabi', ['ayakkabi', 'ayakkabı', 'shoe', 'shoes']],
       ['terlik', ['terlik', 'sandal', 'sandalet', 'slipper', 'slippers', 'plaj', 'havuz']],
       ['bot', ['bot', 'boot', 'cizme', 'çizme']],
+      
+      // Aksesuar kategorileri
       ['canta', ['canta', 'çanta', 'bag', 'backpack', 'sirt cantasi', 'sırt çantası']],
       ['corap', ['corap', 'çorap', 'corab', 'sock', 'socks']],
+      ['sapka', ['sapka', 'şapka', 'cap', 'hat', 'bere', 'bone', 'bandana']],
+      ['eldiven', ['eldiven', 'glove', 'gloves']],
+      ['kemer', ['kemer', 'belt']],
+      
+      // Spor kategorileri
       ['kosu', ['kosu', 'koşu', 'running', 'runner']],
       ['spor', ['spor', 'sport', 'athletic', 'training']],
       ['gunluk', ['gunluk', 'günlük', 'casual', 'lifestyle']],
       ['krampon', ['krampon', 'futbol', 'football', 'soccer']],
+      ['basketbol', ['basketbol', 'basketball', 'basket']],
+      
+      // Giyim kategorileri
       ['sort', ['sort', 'şort', 'short', 'shorts', 'deniz']],
+      ['mont', ['mont', 'ceket', 'jacket', 'coat']],
+      ['tisort', ['tisort', 'tişört', 't-shirt', 'tshirt']],
+      ['sweatshirt', ['sweatshirt', 'hoodie', 'kapüşonlu']],
     ]);
   }
 }

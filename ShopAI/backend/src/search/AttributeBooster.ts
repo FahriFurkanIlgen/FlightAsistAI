@@ -168,7 +168,7 @@ export class AttributeBooster {
   }
 
   /**
-   * Price match scoring
+   * Price match scoring with hard filtering
    */
   private priceMatchScore(
     product: Product,
@@ -185,18 +185,29 @@ export class AttributeBooster {
 
     const { min, max } = priceRange;
 
-    // Check if price is within range
+    // HARD FILTER: Eliminate products outside range
     if (min !== undefined && price < min) {
-      return -0.5; // Penalty for being too cheap
+      return -100; // Eliminate products below min price
     }
 
     if (max !== undefined && price > max) {
-      return -1.0; // Penalty for being too expensive
+      return -100; // Eliminate products above max price
     }
 
     // Bonus for being in range
     if ((min !== undefined || max !== undefined)) {
-      return 0.5;
+      // Give higher score to products closer to the middle of range
+      if (min !== undefined && max !== undefined) {
+        const midPoint = (min + max) / 2;
+        const distance = Math.abs(price - midPoint);
+        const rangeSize = max - min;
+        const normalizedDistance = distance / rangeSize;
+        
+        // Score decreases as distance from midpoint increases
+        return 2.0 * (1 - normalizedDistance); // 2.0 at midpoint, 1.0 at edges
+      }
+      
+      return 1.0; // In range
     }
 
     return 0;
@@ -207,6 +218,7 @@ export class AttributeBooster {
    * 
    * Category is MANDATORY - mismatch results in elimination
    * Gender is CRITICAL - mismatch heavily penalized
+   * Price is HARD FILTER - out of range products eliminated
    * Other attributes (color, size, features) are balanced
    */
   calculateFinalScore(
@@ -231,18 +243,24 @@ export class AttributeBooster {
       return -1000;
     }
 
+    // CRITICAL: Price out of range = immediate elimination
+    if (boosts.price < -50) {
+      return -1000;
+    }
+
     // Balanced scoring where each attribute contributes fairly
     // SIZE is dominant when specified - CRITICAL for exact matches
+    // PRICE contributes to ranking within valid range
     // BM25 has lower weight since stopwords can inflate it
     return (
       0.08 * bm25Score +            // Text relevance (reduced)
       0.05 * boosts.brand +         // Brand preference
-      0.12 * boosts.color +         // Color match
-      0.20 * boosts.category +      // Category match (mandatory)
-      0.40 * boosts.size +          // Size match (DOMINANT when specified)
-      0.10 * boosts.gender +        // Gender match (critical for child products)
-      0.05 * boosts.specialFeatures // Special features (ışıklı, etc.)
-      // price excluded - not primary sorting factor
+      0.10 * boosts.color +         // Color match
+      0.18 * boosts.category +      // Category match (mandatory)
+      0.35 * boosts.size +          // Size match (DOMINANT when specified)
+      0.08 * boosts.gender +        // Gender match (critical for child products)
+      0.12 * boosts.price +         // Price range match (NEW: important for filtering)
+      0.04 * boosts.specialFeatures // Special features (ışıklı, etc.)
     );
   }
 

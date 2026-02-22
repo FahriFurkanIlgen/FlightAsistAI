@@ -1,9 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { WidgetConfig, DEFAULT_CONFIG, DEFAULT_CATEGORIES, QueryParserVersion } from '../../../shared/types/config';
 import { CacheService } from '../services/cacheService';
+import { TenantService } from '../services/tenantService';
+import { optionalApiKey } from '../middleware/auth';
 
 const router = Router();
 const cacheService = CacheService.getInstance();
+const tenantService = TenantService.getInstance();
 
 // In-memory config storage (in production, this would be in a database)
 const siteConfigs: Map<string, WidgetConfig> = new Map();
@@ -32,10 +35,38 @@ const defaultSkechersConfig: WidgetConfig = {
 siteConfigs.set('skechers-tr', defaultSkechersConfig);
 cacheService.setSiteConfig(defaultSkechersConfig);
 
-// GET /api/config/:siteId
-router.get('/:siteId', (req: Request, res: Response) => {
+// GET /api/config/:siteId - Get widget configuration
+// Optionally authenticated - uses tenant config if API key provided
+router.get('/:siteId', optionalApiKey, async (req: Request, res: Response) => {
   try {
     const { siteId } = req.params;
+    
+    // If authenticated with tenant, use tenant config
+    if (req.tenant) {
+      const tenantConfig: WidgetConfig = {
+        siteId: req.tenant.siteId,
+        siteName: req.tenant.siteName,
+        primaryColor: req.tenant.primaryColor || '#022d56',
+        secondaryColor: req.tenant.secondaryColor || '#0ea5e9',
+        brandLogo: req.tenant.brandLogo,
+        welcomeMessage: req.tenant.welcomeMessage || `Merhaba! ${req.tenant.siteName} alışveriş asistanınız.`,
+        welcomeSubtext: req.tenant.welcomeSubtext || 'Size nasıl yardımcı olabilirim?',
+        categories: req.tenant.categories?.map(cat => ({
+          id: cat.label.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          name: cat.label,
+          emoji: cat.label.split(' ')[0], // Extract emoji from label
+          keywords: cat.keywords
+        })) || DEFAULT_CATEGORIES,
+        privacyPolicyUrl: req.tenant.privacyPolicyUrl,
+        brandingText: 'Powered by ShopAsistAI',
+        showBranding: true,
+        queryParserVersion: 'v1',
+      };
+      
+      return res.json(tenantConfig);
+    }
+    
+    // Otherwise use legacy config
     const config = siteConfigs.get(siteId);
 
     if (!config) {

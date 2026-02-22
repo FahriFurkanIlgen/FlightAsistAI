@@ -61,7 +61,7 @@ router.get('/:siteId/search', (req: Request, res: Response) => {
 });
 
 // GET /api/products/:siteId/category
-router.get('/:siteId/category', (req: Request, res: Response) => {
+router.get('/:siteId/category', async (req: Request, res: Response) => {
   try {
     const { siteId } = req.params;
     const { keywords } = req.query;
@@ -73,7 +73,7 @@ router.get('/:siteId/category', (req: Request, res: Response) => {
     }
 
     const keywordArray = keywords.split(',').map((k) => k.trim());
-    const products = cacheService.filterProductsByCategory(siteId, keywordArray);
+    const products = await cacheService.filterProductsByCategory(siteId, keywordArray);
 
     res.json({
       siteId,

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Skechers Türkiye - Spor Ayakkabılar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Mulish', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #ffffff;
+      color: #333;
+    }
+
+    /* Demo Site Header */
+    .site-header {
+      background: #022d56;
+      color: white;
+      padding: 1rem 2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .site-header .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .nav-menu {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+
+    .nav-menu a:hover {
+      opacity: 0.8;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 4rem 2rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.3rem;
+      opacity: 0.9;
+      margin-bottom: 2rem;
+    }
+
+    .cta-button {
+      background: white;
+      color: #667eea;
+      padding: 1rem 2rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Products Section */
+    .products-section {
+      max-width: 1200px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+
+    .section-title {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+      color: #022d56;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .product-image {
+      width: 100%;
+      height: 280px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+    }
+
+    .product-info {
+      padding: 1.5rem;
+    }
+
+    .product-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #022d56;
+    }
+
+    .product-price {
+      font-size: 1.3rem;
+      color: #0ea5e9;
+      font-weight: 700;
+    }
+
+    .product-old-price {
+      text-decoration: line-through;
+      color: #999;
+      margin-left: 0.5rem;
+      font-size: 1rem;
+    }
+
+    /* Footer */
+    .site-footer {
+      background: #022d56;
+      color: white;
+      padding: 3rem 2rem;
+      margin-top: 4rem;
+      text-align: center;
+    }
+
+    .site-footer p {
+      opacity: 0.8;
+    }
+
+    /* Info Banner */
+    .info-banner {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 1rem;
+      margin: 2rem auto;
+      max-width: 1200px;
+      border-radius: 8px;
+    }
+
+    .info-banner strong {
+      color: #92400e;
+    }
+  </style>
+</head>
+<body>
+  <!-- Simulated Skechers Website -->
+  <header class="site-header">
+    <div class="container">
+      <div class="logo">👟 SKECHERS</div>
+      <nav>
+        <ul class="nav-menu">
+          <li><a href="#erkek">Erkek</a></li>
+          <li><a href="#kadin">Kadın</a></li>
+          <li><a href="#cocuk">Çocuk</a></li>
+          <li><a href="#spor">Spor</a></li>
+          <li><a href="#kampanya">Kampanyalar</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <h1>🎉 Yeni Sezon Koleksiyonu</h1>
+    <p>Konfor ve stilin buluştuğu yerdesiniz</p>
+    <a href="#" class="cta-button">Hemen Keşfet</a>
+  </section>
+
+  <div class="info-banner">
+    <strong>💬 ShopAsist AI aktif!</strong> Sağ alt köşedeki chat butonuna tıklayarak alışveriş asistanımızla konuşabilir, ürün önerileri alabilirsiniz. Örnek: "42 numara erkek spor ayakkabı göster"
+  </div>
+
+  <section class="products-section">
+    <h2 class="section-title">Öne Çıkan Ürünler</h2>
+    <div class="products-grid">
+      <div class="product-card">
+        <div class="product-image">👟</div>
+        <div class="product-info">
+          <div class="product-name">Go Run Trail Altitude</div>
+          <div class="product-price">
+            2.499 TL
+            <span class="product-old-price">3.199 TL</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="product-card">
+        <div class="product-image">👟</div>
+        <div class="product-info">
+          <div class="product-name">D'Lux Walker</div>
+          <div class="product-price">2.299 TL</div>
+        </div>
+      </div>
+      
+      <div class="product-card">
+        <div class="product-image">👟</div>
+        <div class="product-info">
+          <div class="product-name">Arch Fit Paradyme</div>
+          <div class="product-price">
+            2.899 TL
+            <span class="product-old-price">3.499 TL</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="product-card">
+        <div class="product-image">👟</div>
+        <div class="product-info">
+          <div class="product-name">Max Cushioning Elite</div>
+          <div class="product-price">3.199 TL</div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-image">👟</div>
+        <div class="product-info">
+          <div class="product-name">Summits Brisbane</div>
+          <div class="product-price">2.199 TL</div>
+        </div>
+      </div>
+
+      <div class="product-card">
+        <div class="product-image">👟</div>
+        <div class="product-info">
+          <div class="product-name">Skech-Air Ventura</div>
+          <div class="product-price">
+            1.999 TL
+            <span class="product-old-price">2.599 TL</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <p>© 2026 Skechers Türkiye - Tüm hakları saklıdır</p>
+    <p style="margin-top: 1rem; font-size: 0.9rem;">Bu bir demo sayfasıdır. ShopAsist AI widget entegrasyonunu göstermek için oluşturulmuştur.</p>
+  </footer>
+
+  <!-- ShopAsist AI Widget Integration - Müşteri buraya sadece bu kodu ekleyecek -->
+  <script>
+    // Widget Configuration
+    window.ShopAsistConfig = {
+      siteId: 'skechers-tr',
+      apiUrl: 'http://localhost:3000'
+    };
+  </script>
+  <link rel="stylesheet" href="styles/main.css">
+  <script src="scripts/app.js"></script>
+</body>
+</html>

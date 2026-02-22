@@ -7,9 +7,11 @@ import { QueryParserService } from './QueryParserService';
 import { AttributeBooster } from './AttributeBooster';
 import { ProductIndexer } from './ProductIndexer';
 import { MerchandisingEngine, ProductSignals } from './MerchandisingEngine';
-import { SearchableProduct, ScoredProduct } from './types';
+import { SearchableProduct, ScoredProduct, StrategyResult } from './types';
 import type { QueryParserVersion } from '../../../shared/types/config';
 import { SimpleCache } from '../services/simpleCache';
+import { QueryAnalyzer } from './QueryAnalyzer';
+import { SKUMatcher } from './SKUMatcher';
 
 export class SearchService {
   private index: InvertedIndex;
@@ -18,7 +20,10 @@ export class SearchService {
   private booster: AttributeBooster;
   private indexer: ProductIndexer;
   private merchandising: MerchandisingEngine;
+  private queryAnalyzer: QueryAnalyzer;
+  private skuMatcher: SKUMatcher;
   private searchableProducts: Map<string, SearchableProduct> = new Map();
+  private allProducts: Product[] = [];
   private isIndexed: boolean = false;
   private searchCache: SimpleCache<Product[]>;
 
@@ -29,6 +34,8 @@ export class SearchService {
     this.booster = new AttributeBooster();
     this.indexer = new ProductIndexer();
     this.merchandising = new MerchandisingEngine();
+    this.queryAnalyzer = new QueryAnalyzer();
+    this.skuMatcher = new SKUMatcher([]);
     this.searchCache = new SimpleCache<Product[]>(1000, 600000); // Cache 1000 queries for 10 min
     
     console.log(`[SearchService] Initialized with Query Parser version: ${parserVersion}`);
@@ -41,6 +48,10 @@ export class SearchService {
     console.log(`[SearchService] Building index for ${products.length} products...`);
     
     const startTime = Date.now();
+
+    // Store all products for SKU matching
+    this.allProducts = products;
+    this.skuMatcher.updateProducts(products);
 
     // Step 1: Convert to searchable products
     const searchableProducts = this.indexer.indexProducts(products);
@@ -74,7 +85,7 @@ export class SearchService {
   }
 
   /**
-   * Search products using hybrid BM25 + attribute boosting
+   * Multi-Strategy Search - tries different strategies based on query type
    * 
    * @param query - Free text search query
    * @param topK - Number of results to return (default: 10)
@@ -96,104 +107,142 @@ export class SearchService {
 
     const startTime = Date.now();
 
-    // STEP 1: Parse query and extract attributes
-    const attributes = await this.parser.parse(query);
-    console.log('[SearchService] Extracted attributes:', attributes);
+    // STEP 1: Analyze query to determine best strategy
+    const analysis = this.queryAnalyzer.analyze(query);
+    console.log(`[SearchService] Query Analysis:`, {
+      query,
+      primaryType: analysis.primaryType,
+      secondaryTypes: analysis.secondaryTypes,
+      confidence: analysis.confidence,
+      patterns: analysis.detectedPatterns,
+    });
 
-    // STEP 2: Get query tokens for BM25
+    // STEP 2: Execute search strategies
+    const strategyResults: StrategyResult[] = [];
+
+    // Strategy 1: SKU/Product Code search (if detected)
+    if (analysis.primaryType === 'sku-exact' || 
+        analysis.primaryType === 'sku-partial' || 
+        analysis.primaryType === 'product-code') {
+      
+      const skuResult = this.searchBySKU(query, analysis);
+      if (skuResult.products.length > 0) {
+        strategyResults.push(skuResult);
+        console.log(`[SearchService] SKU Strategy found ${skuResult.products.length} products`);
+      }
+    }
+
+    // Strategy 2: Semantic/BM25 search (always try as fallback or primary)
+    if (analysis.shouldTryAllStrategies || 
+        strategyResults.length === 0 ||
+        analysis.primaryType === 'semantic' ||
+        analysis.primaryType === 'attribute-combo' ||
+        analysis.primaryType === 'category') {
+      
+      const semanticResult = await this.searchSemantic(query, topK * 2);
+      if (semanticResult.products.length > 0) {
+        strategyResults.push(semanticResult);
+        console.log(`[SearchService] Semantic Strategy found ${semanticResult.products.length} products`);
+      }
+    }
+
+    // STEP 3: Merge and rank results from all strategies
+    const mergedResults = this.mergeStrategyResults(strategyResults, topK);
+
+    const duration = Date.now() - startTime;
+    console.log(`[SearchService] Multi-strategy search completed in ${duration}ms - ${mergedResults.length} results`);
+
+    // Cache the results
+    if (mergedResults.length > 0) {
+      this.searchCache.set(cacheKey, mergedResults);
+      console.log(`[SearchService] Cached ${mergedResults.length} results for query: "${query}"`);
+    }
+
+    return mergedResults;
+  }
+
+  /**
+   * SKU/Product Code Search Strategy
+   */
+  private searchBySKU(query: string, analysis: any): StrategyResult {
+    const skuQuery = analysis.detectedPatterns.sku || 
+                     analysis.detectedPatterns.partialSku || 
+                     analysis.detectedPatterns.productCode || 
+                     query;
+
+    const skuResults = this.skuMatcher.search(skuQuery);
+    
+    // Prioritize exact matches, then variants, then fuzzy
+    const products = [
+      ...skuResults.exactMatches,
+      ...skuResults.variantMatches.slice(0, 10), // Limit variants
+      ...skuResults.fuzzyMatches.slice(0, 5),    // Limit fuzzy matches
+    ];
+
+    return {
+      strategy: 'sku-based',
+      products,
+      score: 1.0, // SKU searches have highest priority
+      matchCount: products.length,
+    };
+  }
+
+  /**
+   * Semantic/BM25 Search Strategy (original implementation)
+   */
+  private async searchSemantic(query: string, topK: number): Promise<StrategyResult> {
+    // Parse query and extract attributes
+    const attributes = await this.parser.parse(query);
+
+    // Get query tokens for BM25
     const queryTokens = this.scorer.tokenizeQuery(query);
     
-    // STEP 3: Get candidate documents (all docs with at least one matching term)
+    // Get candidate documents
     const candidates = this.scorer.getCandidateDocuments(queryTokens);
-    console.log(`[SearchService] Found ${candidates.size} candidate documents`);
 
-    // STEP 3.5: If size is specified, add ALL products with matching size to candidates
-    // This ensures size-specific products are not missed by BM25 text matching
+    // Add size-matched products to candidates (if size specified)
     if (attributes.size) {
-      console.log(`[SearchService] Size attribute detected: ${attributes.size}, expanding candidates...`);
-      
-      // Debug: Count total products with size 28 in searchableProducts
-      const allSize28 = Array.from(this.searchableProducts.values()).filter(p => {
-        return p.size && String(p.size).trim() === '28';
-      });
-      console.log(`[SearchService] Total products with size=28 in searchableProducts: ${allSize28.length}`);
-      if (allSize28.length > 0) {
-        console.log(`[SearchService] Sample size=28 products:`, allSize28.slice(0, 3).map(p => ({
-          id: p.id,
-          size: p.size,
-          gender: p.gender,
-          type: p.productType?.substring(0, 30)
-        })));
-      }
-      
-      let sizeMatchCount = 0;
-      const sizeMatches: Array<{id: string, size: string, gender: string, type: string}> = [];
-      
       for (const [productId, product] of this.searchableProducts.entries()) {
         if (!product.size) continue;
         
         const productSize = String(product.size).trim();
         const querySize = attributes.size.trim();
         
-        // NOTE: productId is the map key which is already "id-size" composite
-        // Exact match or numeric match within ±1
         if (productSize === querySize) {
-          if (!candidates.has(productId)) {
-            candidates.add(productId);  // productId is already composite "id-size"
-            sizeMatchCount++;
-            sizeMatches.push({
-              id: productId,
-              size: productSize,
-              gender: product.gender || 'N/A',
-              type: product.productType || 'N/A'
-            });
-          }
+          candidates.add(productId);
         } else {
           const productSizeNum = parseFloat(productSize);
           const querySizeNum = parseFloat(querySize);
           
-          if (!isNaN(productSizeNum) && !isNaN(querySizeNum)) {
-            const diff = Math.abs(productSizeNum - querySizeNum);
-            if (diff <= 1.0) {
-              if (!candidates.has(productId)) {
-                candidates.add(productId);  // productId is already composite "id-size"
-                sizeMatchCount++;
-                sizeMatches.push({
-                  id: productId,
-                  size: productSize,
-                  gender: product.gender || 'N/A',
-                  type: product.productType || 'N/A'
-                });
-              }
-            }
+          if (!isNaN(productSizeNum) && !isNaN(querySizeNum) && Math.abs(productSizeNum - querySizeNum) <= 1.0) {
+            candidates.add(productId);
           }
         }
-      }
-      
-      console.log(`[SearchService] Added ${sizeMatchCount} size-matched products to candidates (total: ${candidates.size})`);
-      if (sizeMatches.length > 0) {
-        console.log(`[SearchService] Size matches:`, sizeMatches.slice(0, 10));
       }
     }
 
     if (candidates.size === 0) {
-      console.log('[SearchService] No candidates found');
-      return [];
+      return {
+        strategy: 'semantic-bm25',
+        products: [],
+        score: 0.5,
+        matchCount: 0,
+      };
     }
 
-    // STEP 4: Calculate BM25 scores for candidates
+    // Calculate BM25 scores
     const bm25Scores = this.scorer.scoreDocuments(queryTokens, Array.from(candidates));
 
-    // STEP 5: Score all canddates with attribute boosting
+    // Score with attribute boosting
     const scoredProducts: ScoredProduct[] = [];
 
     for (const [productId, bm25Score] of bm25Scores.entries()) {
-      // Try to get searchable product - handle composite keys (id-size)
       let searchableProduct = this.searchableProducts.get(productId);
       
-      // If not found, try finding any variant of this product ID
       if (!searchableProduct) {
-        const matchingKey = Array.from(this.searchableProducts.keys()).find(key => key.startsWith(productId + '-') || key === productId);
+        const matchingKey = Array.from(this.searchableProducts.keys()).find(
+          key => key.startsWith(productId + '-') || key === productId
+        );
         if (matchingKey) {
           searchableProduct = this.searchableProducts.get(matchingKey);
         }
@@ -201,10 +250,7 @@ export class SearchService {
       
       if (!searchableProduct) continue;
 
-      // Calculate attribute boosts
       const boosts = this.booster.calculateBoosts(searchableProduct, attributes);
-
-      // Calculate final score
       const finalScore = this.booster.calculateFinalScore(bm25Score, boosts);
 
       scoredProducts.push({
@@ -222,27 +268,55 @@ export class SearchService {
       });
     }
 
-    // STEP 6: Filter out products with negative scores (category mismatch)
+    // Filter and merchandise
     const validProducts = scoredProducts.filter(sp => sp.scores.final > 0);
-
-    // STEP 7: Apply merchandising
     const merchandisedProducts = this.merchandising.applyMerchandising(validProducts);
-
-    // STEP 8: Return top K results
     const results = merchandisedProducts.slice(0, topK).map(sp => sp.product);
 
-    const duration = Date.now() - startTime;
-    console.log(`[SearchService] Search completed in ${duration}ms - ${results.length} results`);
+    return {
+      strategy: 'semantic-bm25',
+      products: results,
+      score: 0.5,
+      matchCount: results.length,
+    };
+  }
 
-    // Cache the results ONLY if we found products (avoid caching empty results)
-    if (results.length > 0) {
-      this.searchCache.set(cacheKey, results);
-      console.log(`[SearchService] Cached ${results.length} results for query: "${query}"`);
-    } else {
-      console.log(`[SearchService] Skipping cache for empty results: "${query}"`);
+  /**
+   * Merge results from multiple strategies
+   */
+  private mergeStrategyResults(strategyResults: StrategyResult[], topK: number): Product[] {
+    if (strategyResults.length === 0) {
+      return [];
     }
 
-    return results;
+    // If only one strategy returned results, use it directly
+    if (strategyResults.length === 1) {
+      return strategyResults[0].products.slice(0, topK);
+    }
+
+    // Merge results: prioritize by strategy score, then deduplicate
+    const seenIds = new Set<string>();
+    const mergedProducts: Product[] = [];
+
+    // Sort strategies by score (highest first)
+    const sortedStrategies = [...strategyResults].sort((a, b) => b.score - a.score);
+
+    for (const strategyResult of sortedStrategies) {
+      for (const product of strategyResult.products) {
+        const productKey = product.size ? `${product.id}-${product.size}` : product.id;
+        
+        if (!seenIds.has(productKey)) {
+          seenIds.add(productKey);
+          mergedProducts.push(product);
+          
+          if (mergedProducts.length >= topK) {
+            return mergedProducts;
+          }
+        }
+      }
+    }
+
+    return mergedProducts;
   }
 
   /**

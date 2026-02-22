@@ -3,25 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShopAsistAI - Widget Demo</title>
+  <title>ShopAsistAI Widget</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  <!-- Simulated Shop Page Background -->
-  <div class="demo-page">
-    <div class="demo-header">
-      <h1>🛍️ E-Commerce Site Demo</h1>
-      <p>Widget sağ alt köşede açılır</p>
-    </div>
-    <div class="demo-content">
-      <p>Bu bir e-ticaret sitesi simülasyonudur. Sağ alt köşedeki chat butonuna tıklayarak ShopAsistAI widget'ını test edebilirsiniz.</p>
-    </div>
-  </div>
-
-  <!-- ShopAsistAI Chat Widget -->
+  <!-- ShopAsistAI Chat Widget - Standalone Embeddable Widget -->
   <div id="chat-widget" class="chat-widget">
     <div id="chat-toggle" class="chat-toggle">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -51,8 +40,6 @@
         <div id="chat-messages" class="chat-messages"></div>
       </div>
 
-      <div id="product-suggestions" class="product-suggestions"></div>
-
       <div class="chat-input-container">
         <textarea 
           id="chat-input" 
@@ -80,6 +67,14 @@
     </div>
   </div>
 
+  <!-- Widget Initialization Script -->
+  <script>
+    // Default configuration - will be overridden by parent page's ShopAsistConfig
+    window.ShopAsistConfig = window.ShopAsistConfig || {
+      siteId: 'skechers-tr',
+      apiUrl: 'http://localhost:3000'
+    };
+  </script>
   <script src="scripts/app.js"></script>
 </body>
 </html>

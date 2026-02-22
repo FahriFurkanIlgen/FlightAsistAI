@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shadow DOM Isolation Test - ShopAsist AI</title>
+  <style>
+    /* AGGRESSIVE STYLING TO TEST SHADOW DOM ISOLATION */
+    * {
+      margin: 50px !important;
+      padding: 50px !important;
+      border: 5px solid red !important;
+      background: yellow !important;
+      color: purple !important;
+      font-size: 30px !important;
+    }
+
+    body {
+      background: linear-gradient(135deg, #ff0000 0%, #00ff00 50%, #0000ff 100%) !important;
+    }
+
+    div {
+      transform: rotate(5deg) !important;
+    }
+
+    button {
+      background: orange !important;
+      color: black !important;
+      border-radius: 50% !important;
+    }
+
+    /* These aggressive styles should NOT affect the widget if Shadow DOM works */
+  </style>
+</head>
+<body>
+  <div class="test-header">
+    <h1>🧪 Shadow DOM Isolation Test</h1>
+    <p>This page has EXTREME CSS that tries to break everything!</p>
+    <p><strong>If Shadow DOM works correctly:</strong></p>
+    <ul>
+      <li>✅ The widget in the bottom right should look normal</li>
+      <li>✅ These page styles should NOT affect the widget</li>
+      <li>✅ Widget styles should NOT leak to this page</li>
+    </ul>
+  </div>
+
+  <div class="test-content">
+    <p>All elements on this page have:</p>
+    <ul>
+      <li>50px margins and padding</li>
+      <li>Red borders</li>
+      <li>Yellow backgrounds</li>
+      <li>Purple text</li>
+      <li>30px font size</li>
+      <li>5deg rotation</li>
+    </ul>
+    <p><strong>The widget should be immune to all of this! 🛡️</strong></p>
+  </div>
+
+  <!-- ShopAsist AI Widget with Shadow DOM -->
+  <script>
+    window.ShopAsistConfig = {
+      siteId: 'skechers-tr',
+      apiUrl: 'http://localhost:3000',
+      widgetUrl: 'http://localhost:3001'
+    };
+  </script>
+  <script src="scripts/widget-loader.js"></script>
+</body>
+</html>

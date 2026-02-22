@@ -20,6 +20,47 @@ export interface ExtractedAttributes {
   isChildQuery?: boolean; // Sorgu çocuk ürünü için mi?
   gender?: 'erkek' | 'kadin' | 'kiz' | 'unisex'; // Cinsiyet/hedef kitle
   specialFeatures?: string[]; // İşıklı, su geçirmez, vs
+  sku?: string; // SKU/Product Code
+}
+
+/**
+ * Query Type Detection Results
+ */
+export type QueryType = 
+  | 'sku-exact'        // Exact SKU match: SK2520052-1602
+  | 'sku-partial'      // Partial SKU: SK2520052 (find all variants)
+  | 'sku-fuzzy'        // Fuzzy SKU with typos
+  | 'product-code'     // Product codes: 253010 BBK, 100439
+  | 'size-only'        // Just size: 42, 28, 5-6
+  | 'price-range'      // Price queries: 2000-3000 TL
+  | 'attribute-combo'  // Color + size, brand + model
+  | 'category'         // Category search
+  | 'semantic'         // Natural language
+  | 'multi-strategy';  // Combination of multiple types
+
+export interface QueryAnalysisResult {
+  primaryType: QueryType;
+  secondaryTypes: QueryType[];
+  confidence: number;
+  detectedPatterns: {
+    sku?: string;
+    partialSku?: string;
+    productCode?: string;
+    size?: string;
+    priceRange?: { min?: number; max?: number };
+    category?: string[];
+  };
+  shouldTryAllStrategies: boolean;
+}
+
+/**
+ * Search Strategy Result
+ */
+export interface StrategyResult {
+  strategy: string;
+  products: Product[];
+  score: number;
+  matchCount: number;
 }
 
 export interface ScoredProduct {

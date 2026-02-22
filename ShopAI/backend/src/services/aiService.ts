@@ -30,19 +30,108 @@ export class AIService {
         return irrelevantResponse;
       }
 
-      // Check response cache
-      const cacheKey = this.buildCacheKey(message, conversationHistory);
-      const cachedResponse = this.responseCache.get(cacheKey);
-      if (cachedResponse) {
-        console.log(`[AIService] Response cache HIT for: "${message}"`);
-        return cachedResponse;
-      }
-
       const products = this.cacheService.getProducts(siteId);
       if (!products || products.length === 0) {
         return {
           message: 'Üzgünüm, şu anda ürün bilgilerine erişemiyorum. Lütfen daha sonra tekrar deneyin.',
         };
+      }
+
+      // CHECK FOR SKU/MPN/PRODUCT CODE QUERIES
+      // Pattern: SK2520052-1602, 253010 BBK, 100439-BBK, etc.
+      const skuMatch = message.match(/\b([A-Z]{2,}[\d]{4,}[\-\s]?[\w]{2,}|\d{6}[\-\s]?[A-Z]{2,})\b/i);
+      if (skuMatch) {
+        const skuQuery = skuMatch[1].toUpperCase().replace(/\s+/g, ' ').trim();
+        console.log(`[AIService] SKU/MPN detected: "${skuQuery}"`);
+        
+        // Search for exact SKU match in id or mpn fields
+        const skuProducts = products.filter(p => {
+          const productId = (p.id || '').toUpperCase().replace(/\s+/g, ' ').trim();
+          const productMpn = (p.mpn || '').toUpperCase().replace(/\s+/g, ' ').trim();
+          
+          return productId.includes(skuQuery) || 
+                 productMpn.includes(skuQuery) ||
+                 productId.replace(/[\s\-]/g, '') === skuQuery.replace(/[\s\-]/g, '') ||
+                 productMpn.replace(/[\s\-]/g, '') === skuQuery.replace(/[\s\-]/g, '');
+        });
+        
+        console.log(`[AIService] Found ${skuProducts.length} products matching SKU "${skuQuery}"`);
+        
+        if (skuProducts.length > 0) {
+          // Deduplicate and sort by availability
+          const uniqueProducts = this.deduplicateProductsBySku(skuProducts);
+          
+          const availableProducts = uniqueProducts.filter(p => 
+            p.availability?.toLowerCase().includes('in stock')
+          );
+          
+          const finalSkuProducts = availableProducts.length > 0 ? availableProducts : uniqueProducts;
+          
+          // Build AI response for SKU query
+          const skuMessages = this.buildMessages(message, conversationHistory, finalSkuProducts.slice(0, 10), siteId);
+          
+          const completion = await this.openai.chat.completions.create({
+            model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+            messages: skuMessages,
+            temperature: 0.7,
+            max_tokens: 250,
+            presence_penalty: 0.6,
+            frequency_penalty: 0.3,
+          });
+
+          const aiMessage = completion.choices[0]?.message?.content || 
+            `${skuQuery} kodlu ürünümüzü buldum! ${finalSkuProducts.length} farklı varyant mevcut.`;
+
+          return {
+            message: aiMessage,
+            recommendedProducts: finalSkuProducts.slice(0, 3),
+            debug: {
+              originalQuery: message,
+              enhancedQuery: `SKU Search: ${skuQuery}`,
+              isFollowUp: false,
+            },
+          };
+        } else {
+          // SKU not found, try fuzzy match
+          const fuzzyProducts = this.findSimilarSkuProducts(products, skuQuery);
+          
+          if (fuzzyProducts.length > 0) {
+            const fuzzyMessages = this.buildMessages(
+              `Kullanıcı ${skuQuery} kodlu ürün arıyor ama tam eşleşme yok. Benzer kodlu ürünler öner.`,
+              conversationHistory,
+              fuzzyProducts,
+              siteId
+            );
+            
+            const completion = await this.openai.chat.completions.create({
+              model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
+              messages: fuzzyMessages,
+              temperature: 0.7,
+              max_tokens: 250,
+            });
+
+            const aiMessage = completion.choices[0]?.message?.content || 
+              `${skuQuery} kodlu ürünü bulamadım, ancak benzer ürünlerimiz var.`;
+
+            return {
+              message: aiMessage,
+              recommendedProducts: fuzzyProducts.slice(0, 3),
+              debug: {
+                originalQuery: message,
+                enhancedQuery: `Fuzzy SKU Search: ${skuQuery}`,
+                isFollowUp: false,
+              },
+            };
+          }
+        }
+      }
+
+      // Check response cache (after SKU check to allow SKU queries to bypass cache)
+      const cacheKey = this.buildCacheKey(message, conversationHistory);
+      const cachedResponse = this.responseCache.get(cacheKey);
+      if (cachedResponse) {
+        console.log(`[AIService] Response cache HIT for: "${message}"`);
+        return cachedResponse;
       }
 
       // CONTEXT-AWARE SEARCH: Build search query with conversation context
@@ -988,6 +1077,88 @@ ${topProducts.map((p, i) => {
     }
     
     return null; // Query is relevant
+  }
+
+  /**
+   * Deduplicate products by SKU - keep best variant (highest discount, in stock)
+   */
+  private deduplicateProductsBySku(products: Product[]): Product[] {
+    const productMap = new Map<string, Product>();
+    
+    for (const product of products) {
+      // Extract base SKU (remove size/color suffix)
+      const baseSku = product.id.split(/[\s\-]/)[0];
+      const existing = productMap.get(baseSku);
+      
+      if (!existing) {
+        productMap.set(baseSku, product);
+        continue;
+      }
+      
+      // Keep the better variant
+      // 1. Prefer in-stock
+      const isInStock = product.availability?.toLowerCase().includes('in stock');
+      const existingInStock = existing.availability?.toLowerCase().includes('in stock');
+      
+      if (isInStock && !existingInStock) {
+        productMap.set(baseSku, product);
+      } else if (!isInStock && existingInStock) {
+        // Keep existing
+      } else {
+        // Both same stock status, prefer higher discount
+        const discount = this.calculateDiscountPercentage(product);
+        const existingDiscount = this.calculateDiscountPercentage(existing);
+        
+        if (discount > existingDiscount) {
+          productMap.set(baseSku, product);
+        }
+      }
+    }
+    
+    return Array.from(productMap.values());
+  }
+
+  /**
+   * Find products with similar SKU (fuzzy match)
+   */
+  private findSimilarSkuProducts(products: Product[], skuQuery: string): Product[] {
+    const queryParts = skuQuery.split(/[\s\-]/);
+    const mainSku = queryParts[0]; // SK2520052
+    
+    const similarProducts = products.filter(p => {
+      const productId = (p.id || '').toUpperCase();
+      const productMpn = (p.mpn || '').toUpperCase();
+      
+      // Check if main SKU part matches
+      return productId.includes(mainSku) || productMpn.includes(mainSku);
+    });
+    
+    // Sort by availability and discount
+    return similarProducts.sort((a, b) => {
+      const aInStock = a.availability?.toLowerCase().includes('in stock') ? 1 : 0;
+      const bInStock = b.availability?.toLowerCase().includes('in stock') ? 1 : 0;
+      
+      if (aInStock !== bInStock) return bInStock - aInStock;
+      
+      const aDiscount = this.calculateDiscountPercentage(a);
+      const bDiscount = this.calculateDiscountPercentage(b);
+      
+      return bDiscount - aDiscount;
+    });
+  }
+
+  /**
+   * Calculate discount percentage for a product
+   */
+  private calculateDiscountPercentage(product: Product): number {
+    if (!product.price || !product.salePrice) return 0;
+    
+    const originalPrice = this.extractPrice(product.price);
+    const salePrice = this.extractPrice(product.salePrice);
+    
+    if (!originalPrice || !salePrice || salePrice >= originalPrice) return 0;
+    
+    return Math.round(((originalPrice - salePrice) / originalPrice) * 100);
   }
 
   /**

@@ -1,26 +1,137 @@
 # ShopAsistAI
 
-E-ticaret siteleri için yapay zeka destekli alışveriş asistanı. Google Shopping Feed'lerinden ürün verilerini okuyarak, kullanıcılara akıllı ürün önerileri sunar ve doğal dil ile sohbet eder. LoopsAI gibi popup widget olarak çalışır.
+E-ticaret siteleri için yapay zeka destekli alışveriş asistanı widget'ı. Google Shopping Feed'lerinden ürün verilerini okuyarak, kullanıcılara akıllı ürün önerileri sunar ve doğal dil ile sohbet eder. **Loops.so** tarzında embeddable popup widget olarak çalışır.
 
 ## 🎯 Özellikler
 
-- ✅ **Popup Chat Widget**: LoopsAI tarzında modern popup chatbot
+### 🔌 Plugin Sistemi (Loops.so Tarzı)
+- ✅ **Embeddable Widget**: Tek script tag ile herhangi bir siteye entegre edilebilir
+- ✅ **Shadow DOM Isolation**: Müşteri sitesinin CSS'i ile hiçbir çakışma olmaz
+- ✅ **Otomatik Yükleme**: widget-loader.js widget'ı otomatik inject eder
+- ✅ **Multi-Tenant**: Her müşteri için ayrı config ve API key sistemi
+- ✅ **Admin Dashboard**: Müşteri yönetimi ve entegrasyon kod üretimi
+
+### 💬 Widget Özellikleri
+- ✅ **Popup Chat Widget**: Loops.so/Intercom tarzında modern popup chatbot
 - ✅ **Dışardan Yapılandırma**: Site ismi, logo, renkler, kategoriler config ile özelleştirilebilir
 - ✅ **Kategorize Ürün Önerileri**: Kategori butonları ile hızlı ürün filtreleme (👟 Shoes, ⚽ Sports, vb.)
 - ✅ **Hoş Geldin Mesajı**: Özelleştirilebilir karşılama ekranı
 - ✅ **Privacy Policy & Branding**: Gizlilik politikası uyarısı ve markalama footer'ı
+
+### 🔍 Arama & AI
 - ✅ **Google Shopping Feed Entegrasyonu**: XML/RSS formatında ürün feed'lerini otomatik olarak parse eder
 - ✅ **Gelişmiş Arama Motoru**: BM25 + Hybrid search ile text ve attribute matching
 - ✅ **Search Merchandising**: Popülerlik, stok, yeni ürün, kampanya bazlı dinamik ranking
 - ✅ **Akıllı Önbellek Sistemi**: Ürün verilerini 1 saat boyunca cache'de tutar
 - ✅ **Otomatik Güncelleme**: Her saat başında ürün verilerini otomatik olarak yeniler
 - ✅ **AI Destekli Sohbet**: OpenAI GPT-4 ile doğal dil kullanarak ürün önerileri
+
+### 🏗️ Teknik Özellikler
 - ✅ **Modüler Yapı**: Farklı e-ticaret siteleri için kolayca genişletilebilir
 - ✅ **RESTful API**: Backend API ile frontend'i bağımsız kullanabilme
+- ✅ **API Key Authentication**: Güvenli tenant yönetimi
+- ✅ **Quota Management**: Plan bazlı kullanım limitleri
+
+## 🚀 Widget Entegrasyonu
+
+### 🎯 Admin Dashboard ile Müşteri Yönetimi
+
+Önce admin dashboard'dan yeni bir müşteri oluşturun:
+
+```bash
+# Admin Dashboard'a git:
+http://localhost:3001/admin.html
+```
+
+1. "Yeni Müşteri Ekle" formunu doldurun
+2. API key'inizi kaydedin
+3. Entegrasyon kodunu kopyalayın
+
+### Yöntem 1: Widget Loader (TEK SATIRDA ENTEGRASYON) ⚡
+
+En basit yöntem - tek bir script tag ile entegre edin:
+
+```html
+<!-- Müşterinin sitesine ekleyeceği KOD -->
+<script>
+  window.ShopAsistConfig = {
+    siteId: 'skechers-tr',
+    apiUrl: 'http://localhost:3000',
+    widgetUrl: 'http://localhost:3001'
+  };
+</script>
+<script src="http://localhost:3001/scripts/widget-loader.js"></script>
+```
+
+Widget otomatik olarak sayfaya enjekte edilir - HTML değişikliği gerekmez!
+
+### Yöntem 2: Manuel HTML Entegrasyonu
+
+Daha fazla kontrol için widget HTML'ini manuel ekleyin:
+
+```html
+<!-- ShopAsist AI Widget -->
+<script>
+  window.ShopAsistConfig = {
+    siteId: 'skechers-tr',
+    apiUrl: 'http://localhost:3000'
+  };
+</script>
+<link rel="stylesheet" href="http://localhost:3001/styles/main.css">
+<script src="http://localhost:3001/scripts/app.js"></script>
+
+<!-- Widget HTML -->
+<div id="chat-widget" class="chat-widget">
+  <div id="chat-toggle" class="chat-toggle">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </div>
+  <div id="chat-window" class="chat-window">
+    <!-- Widget içeriği otomatik yüklenir -->
+  </div>
+</div>
+```
+
+### 📖 Detaylı Entegrasyon Rehberi
+
+Tüm yapılandırma seçenekleri ve özelleştirmeler için [INTEGRATION_GUIDE.md](./INTEGRATION_GUIDE.md) dosyasına bakın.
+
+### Demo Sayfaları
+
+Widget'ın nasıl çalıştığını görmek için demo sayfalarımızı kullanın:
+
+**1. Widget Loader Demo (Önerilen) ⭐**
+```bash
+npm run dev
+# Tarayıcıda: http://localhost:3001/embed-demo.html
+```
+Gerçek bir Skechers sitesini simüle eder. Widget tek script ile otomatik eklenir.
+
+**2. Shadow DOM Isolation Test 🧪**
+```bash
+# Tarayıcıda: http://localhost:3001/shadow-test.html
+```
+Extreme CSS ile widget'ın izolasyonunu test eder. Widget bu aggressive stillere karşı tamamen korumalıdır!
+
+**3. Manuel Demo**
+```bash
+# Tarayıcıda: http://localhost:3001/demo.html
+```
+Widget HTML'i manuel olarak eklenmiş demo.
+
+**4. Standalone Widget**
+```bash
+# Tarayıcıda: http://localhost:3001/index.html
+```
+Sadece widget - entegrasyon testi için.
 
 ## 🎨 Görünüm
 
-Widget, TUDORS örneğindeki gibi modern bir popup chatbot olarak tasarlanmıştır:
+Widget, modern bir popup chatbot olarak tasarlanmıştır:
+- Müşterinin kendi sitesi arka planda görünür
+- Widget sağ alt köşede minimal bir buton olarak durur
+- Tıklandığında modern bir chat penceresi açılır
 - Hoş geldin mesajı ve site branding
 - Kategori butonları ile hızlı navigasyon
 - Privacy policy uyarısı

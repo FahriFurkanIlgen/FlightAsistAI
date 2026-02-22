@@ -7,6 +7,7 @@ import productsRouter from './routes/products';
 import configRouter from './routes/config';
 import searchRouter from './routes/search';
 import merchandisingRouter from './routes/merchandising';
+import tenantsRouter from './routes/tenants';
 import { FeedParserService } from './services/feedParser';
 import { CacheService } from './services/cacheService';
 
@@ -64,6 +65,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/config', configRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/merchandising', merchandisingRouter);
+app.use('/api/tenants', tenantsRouter);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
@@ -71,6 +73,7 @@ app.get('/health', (_req: Request, res: Response) => {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     cache: cacheService.getStats(),
+    version: '2.0.0-multi-tenant',
   });
 });
 

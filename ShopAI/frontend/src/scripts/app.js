@@ -1,9 +1,19 @@
-// ShopAsistAI Frontend Application
-const API_BASE_URL = 'http://localhost:3000';
-const SITE_ID = 'skechers-tr';
+// ShopAsistAI Frontend Application - Embeddable Widget
+// Configuration from parent page
+const widgetConfig = window.ShopAsistConfig || {};
+const API_BASE_URL = widgetConfig.apiUrl || 'http://localhost:3000';
+const SITE_ID = widgetConfig.siteId || 'skechers-tr';
+
+// Get root element (Shadow DOM or document)
+const getRoot = () => {
+  return window.__shopAsistShadowRoot || document;
+};
 
 class ChatWidget {
   constructor() {
+    // Set root to either Shadow DOM or regular document
+    this.root = getRoot();
+    
     this.conversationHistory = [];
     this.isOpen = false;
     this.isLoading = false;
@@ -19,29 +29,31 @@ class ChatWidget {
   }
 
   initElements() {
-    this.chatToggle = document.getElementById('chat-toggle');
-    this.chatWindow = document.getElementById('chat-window');
-    this.chatClose = document.getElementById('chat-close');
-    this.chatContent = document.querySelector('.chat-content'); // Scrollable container
-    this.chatMessages = document.getElementById('chat-messages');
-    this.chatInput = document.getElementById('chat-input');
-    this.chatSend = document.getElementById('chat-send');
-    this.productSuggestions = document.getElementById('product-suggestions');
-    this.chatTitle = document.getElementById('chat-title');
-    this.chatLogo = document.getElementById('chat-logo');
-    this.welcomeMessage = document.getElementById('welcome-message');
-    this.welcomeSubtext = document.getElementById('welcome-subtext');
-    this.welcomeSection = document.getElementById('welcome-section');
-    this.categorySection = document.getElementById('category-section');
-    this.categoryButtons = document.getElementById('category-buttons');
-    this.privacyFooter = document.getElementById('privacy-footer');
-    this.privacyLink = document.getElementById('privacy-link');
-    this.closePrivacy = document.getElementById('close-privacy');
-    this.brandingFooter = document.getElementById('branding-footer');
-    this.closePrivacy.addEventListener('click', () => {
-      this.privacyFooter.style.display = 'none';
-    });
-  }
+    this.chatToggle = this.root.getElementById('chat-toggle');
+    this.chatWindow = this.root.getElementById('chat-window');
+    this.chatClose = this.root.getElementById('chat-close');
+    this.chatContent = this.root.querySelector('.chat-content'); // Scrollable container
+    this.chatMessages = this.root.getElementById('chat-messages');
+    this.chatInput = this.root.getElementById('chat-input');
+    this.chatSend = this.root.getElementById('chat-send');
+    this.productSuggestions = this.root.getElementById('product-suggestions');
+    this.chatTitle = this.root.getElementById('chat-title');
+    this.chatLogo = this.root.getElementById('chat-logo');
+    this.welcomeMessage = this.root.getElementById('welcome-message');
+    this.welcomeSubtext = this.root.getElementById('welcome-subtext');
+    this.welcomeSection = this.root.getElementById('welcome-section');
+    this.categorySection = this.root.getElementById('category-section');
+    this.categoryButtons = this.root.getElementById('category-buttons');
+    this.privacyFooter = this.root.getElementById('privacy-footer');
+    this.privacyLink = this.root.getElementById('privacy-link');
+    this.closePrivacy = this.root.getElementById('close-privacy');
+    this.brandingFooter = this.root.getElementById('branding-footer');
+    
+    if (this.closePrivacy) {
+      this.closePrivacy.addEventListener('click', () => {
+        this.privacyFooter.style.display = 'none';
+      });
+    }
 
   async loadConfig() {
     try {
@@ -73,12 +85,13 @@ class ChatWidget {
       this.chatLogo.style.display = 'block';
     }
 
-    // Apply colors
-    if (this.config.primaryColor) {
-      document.documentElement.style.setProperty('--brand-primary', this.config.primaryColor);
+    // Apply colors to Shadow DOM or document
+    const styleTarget = this.root === document ? document.documentElement : this.root.host;
+    if (this.config.primaryColor && styleTarget) {
+      styleTarget.style.setProperty('--brand-primary', this.config.primaryColor);
     }
-    if (this.config.secondaryColor) {
-      document.documentElement.style.setProperty('--brand-secondary', this.config.secondaryColor);
+    if (this.config.secondaryColor && styleTarget) {
+      styleTarget.style.setProperty('--brand-secondary', this.config.secondaryColor);
     }
 
     // Apply welcome message
@@ -149,6 +162,9 @@ class ChatWidget {
 
     this.selectedCategory = { id: categoryId, name: categoryName };
 
+    // User clicked category, so they want to see results - enable auto-scroll
+    this.userScrolledUp = false;
+
     // Fetch products for this category
     try {
       const response = await fetch(
@@ -163,6 +179,9 @@ class ChatWidget {
         if (this.conversationHistory.length === 0) {
           this.welcomeSection.style.display = 'none';
         }
+        
+        // Scroll to show the products
+        this.scrollToBottom();
       }
     } catch (error) {
       console.error('Error fetching category products:', error);
@@ -368,7 +387,7 @@ class ChatWidget {
   }
 
   removeLoading() {
-    const loadingMsg = document.getElementById('loading-message');
+    const loadingMsg = this.root.getElementById('loading-message');
     if (loadingMsg) {
       loadingMsg.remove();
     }

@@ -27,7 +27,7 @@ export class ProductIndexer {
 
   /**
    * Build searchable text field from product attributes
-   * Combined text: Title + Brand + Category + Color + Description
+   * Combined text: Title + Brand + Category + Color + Gender + Description
    */
   private buildSearchableText(product: Product): string {
     const parts: string[] = [];
@@ -43,9 +43,16 @@ export class ProductIndexer {
       parts.push(product.brand);
     }
 
-    // Category/Product Type
+    // Category/Product Type (important for categorization)
     if (product.productType) {
       parts.push(product.productType);
+      parts.push(product.productType); // Double weight for categories
+    }
+
+    // Gender (important for categorization - Kadın, Erkek, Çocuk)
+    if (product.gender) {
+      parts.push(product.gender);
+      parts.push(product.gender); // Double weight for gender
     }
 
     // Google Product Category
