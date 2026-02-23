@@ -2,7 +2,7 @@
 // Configuration from parent page
 const widgetConfig = window.ShopAsistConfig || {};
 const API_BASE_URL = widgetConfig.apiUrl || 'http://localhost:3000';
-const SITE_ID = widgetConfig.siteId || 'high5-tr';
+const SITE_ID = widgetConfig.siteId || 'high5';
 
 // Get root element (Shadow DOM or document)
 const getRoot = () => {

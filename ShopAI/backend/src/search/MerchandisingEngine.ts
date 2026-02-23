@@ -307,6 +307,7 @@ export class MerchandisingEngine {
   /**
    * Apply diversity to search results
    * Ensures variety in brand, category, price range
+   * UPDATED: More aggressive brand diversity - forces different brands in top results
    */
   private applyDiversity(products: ScoredProduct[]): ScoredProduct[] {
     if (products.length <= 3) {
@@ -317,42 +318,41 @@ export class MerchandisingEngine {
     const diversified: ScoredProduct[] = [];
     const seenBrands = new Set<string>();
     const seenCategories = new Set<string>();
+    const brandCount = new Map<string, number>(); // Track how many times each brand appears
 
-    // Take top products but skip if too similar to already selected
-    for (const product of products) {
-      const brand = product.product.brand?.toLowerCase() || '';
-      const category = product.product.productType?.toLowerCase() || '';
-
-      // First 3 always included (highest relevance)
-      if (diversified.length < 3) {
+    // PASS 1: Ensure brand diversity in top results
+    // Pick top product from each unique brand first
+    const productsByScore = [...products].sort((a, b) => b.scores.final - a.scores.final);
+    
+    for (const product of productsByScore) {
+      if (diversified.length >= Math.min(10, products.length)) {
+        break; // Have enough for first pass
+      }
+      
+      const brand = product.product.brand?.toLowerCase() || 'unknown';
+      
+      // Limit each brand to max 2 products in top 10
+      const currentBrandCount = brandCount.get(brand) || 0;
+      if (currentBrandCount < 2) {
         diversified.push(product);
         seenBrands.add(brand);
+        brandCount.set(brand, currentBrandCount + 1);
+        
+        const category = product.product.productType?.toLowerCase() || '';
         seenCategories.add(category);
-        continue;
-      }
-
-      // For remaining positions, apply diversity
-      const isDifferentBrand = !seenBrands.has(brand);
-      const isDifferentCategory = !seenCategories.has(category);
-
-      // Accept if sufficiently different OR has very high score
-      const scoreThreshold = diversified[diversified.length - 1].scores.final * (1 - diversityFactor);
-      if (isDifferentBrand || isDifferentCategory || product.scores.final > scoreThreshold) {
-        diversified.push(product);
-        seenBrands.add(brand);
-        seenCategories.add(category);
-      }
-
-      // Stop if we have enough results
-      if (diversified.length >= products.length) {
-        break;
       }
     }
 
-    // Add remaining products that weren't included
-    for (const product of products) {
-      if (!diversified.includes(product)) {
-        diversified.push(product);
+    // PASS 2: Fill remaining slots with best remaining products
+    for (const product of productsByScore) {
+      if (diversified.includes(product)) {
+        continue; // Already added
+      }
+      
+      diversified.push(product);
+      
+      if (diversified.length >= products.length) {
+        break;
       }
     }
 

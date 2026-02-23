@@ -1,6 +1,7 @@
 // Inverted Index for BM25 Scoring
 
 import { InvertedIndexEntry, TermFrequency } from './types';
+import { tokenize, normalizeTurkish } from './utils';
 
 export class InvertedIndex {
   private index: Map<string, InvertedIndexEntry> = new Map();
@@ -87,29 +88,17 @@ export class InvertedIndex {
 
   /**
    * Tokenize text into terms
+   * Now uses centralized tokenization from utils.ts
    */
   private tokenize(text: string): string[] {
-    return text
-      .toLowerCase()
-      .replace(/[^\w\sğüşıöç]/g, ' ')
-      .split(/\s+/)
-      .map(t => this.normalizeTerm(t))
-      .filter(t => t.length > 1); // Filter out single characters
+    return tokenize(text);
   }
 
   /**
    * Normalize a single term
    */
   private normalizeTerm(term: string): string {
-    return term
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .trim();
+    return normalizeTurkish(term);
   }
 
   /**

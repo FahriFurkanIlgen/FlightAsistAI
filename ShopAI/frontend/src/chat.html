@@ -613,7 +613,7 @@
 
   <script>
     const API_BASE_URL = 'http://localhost:3000';
-    const SITE_ID = 'high5-tr';
+    const SITE_ID = 'high5';
     let conversationHistory = [];
     let isProcessing = false;
 
@@ -708,7 +708,7 @@
 
       const avatar = document.createElement('div');
       avatar.className = `avatar ${type}-avatar`;
-      avatar.textContent = type === 'user' ? '👤' : '🤖';
+      avatar.textContent = type === 'user' ? '👤' : 'AI';
 
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';
@@ -867,7 +867,7 @@
 
       const avatar = document.createElement('div');
       avatar.className = 'avatar ai-avatar';
-      avatar.textContent = '🤖';
+      avatar.textContent = 'AI';
 
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';

@@ -2,6 +2,7 @@
 
 import { InvertedIndex } from './InvertedIndex';
 import { BM25Parameters } from './types';
+import { tokenize, normalizeTurkish } from './utils';
 
 export class BM25Scorer {
   private index: InvertedIndex;
@@ -102,40 +103,9 @@ export class BM25Scorer {
 
   /**
    * Tokenize and normalize query text
-   * Filters out stopwords that don't contribute to product matching
+   * Now uses centralized tokenization from utils.ts
    */
   tokenizeQuery(text: string): string[] {
-    // Context words that don't describe product features
-    const stopwords = new Set([
-      'bebek', 'cocuk', 'cocuklara', 'cocuguma', 'cocugum',
-      'icin', 'olsun', 've', 'ile', 'bir', 'bu', 'su', 'o',
-      'mi', 'mu', 'misin', 'musun', 'misiniz',
-      'bana', 'bize', 'oneri', 'onerir', 'onerebilir',
-      'bak', 'bakabilir', 'goster', 'gosterir',
-      'var', 'varmi', 'yok', 'yokmu',
-      'ister', 'istiyorum', 'istiyoruz',
-      'lazim', 'gerek', 'gerekir',
-      'yardimci', 'yardim', 'yardimci',
-      'diye', 'gibi', 'kadar',
-    ]);
-
-    return text
-      .toLowerCase()
-      .replace(/[^\w\sğüşıöç]/g, ' ')
-      .split(/\s+/)
-      .map(t => this.normalizeTerm(t))
-      .filter(t => t.length > 1 && !stopwords.has(t)); // Filter stopwords
-  }
-
-  private normalizeTerm(term: string): string {
-    return term
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .trim();
+    return tokenize(text);
   }
 }

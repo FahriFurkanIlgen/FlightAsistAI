@@ -2,6 +2,7 @@ import OpenAI from 'openai';
 import { ChatMessage, ChatRequest, ChatResponse, Product } from '../../../shared/types';
 import { CacheService } from './cacheService';
 import { SimpleCache } from './simpleCache';
+import { extractSize, extractBrand, extractColor, extractGender, normalizeTurkish } from '../search/utils';
 
 export class AIService {
   private openai: OpenAI;
@@ -81,7 +82,9 @@ export class AIService {
             model: process.env.OPENAI_MODEL || 'gpt-4-turbo-preview',
             messages: skuMessages,
             temperature: 0.7,
-          max_tokens: 500,
+            max_tokens: 500,
+          });
+          
           const aiMessage = completion.choices[0]?.message?.content || 
             `${skuQuery} kodlu ürünümüzü buldum! ${finalSkuProducts.length} farklı varyant mevcut.`;
 
@@ -172,9 +175,8 @@ export class AIService {
       
       // Check if user requested specific size but no products found
       // Let AI handle this case - it can suggest alternatives
-      const sizeMatch = message.match(/\b(\d{1,2}(?:\.\d)?)\s*(?:numara|beden|size)?\b/i);
-      if (sizeMatch && finalProducts.length === 0) {
-        const requestedSize = sizeMatch[1];
+      const requestedSize = extractSize(message);
+      if (requestedSize && finalProducts.length === 0) {
         
         // Don't immediately give up - let AI suggest alternatives
         console.log(`[AIService] No products found for size ${requestedSize}, letting AI suggest alternatives`);
@@ -247,9 +249,14 @@ export class AIService {
         { role: 'assistant', content: aiMessage, timestamp: new Date() },
       ];
 
+      // Determine which products to show based on "wants more" pattern
+      const wantsMore = /^(evet|başka|farklı|daha|göster|var mı|olur)/i.test(message.trim());
+      const startIndex = wantsMore ? 4 : 0;
+      const displayProducts = finalProducts.slice(startIndex, startIndex + 4);
+
       const response: ChatResponse = {
         message: aiMessage,
-        recommendedProducts: finalProducts.slice(0, 4),
+        recommendedProducts: displayProducts,
         conversationHistory: updatedHistory,
         debug: {
           originalQuery: message,
@@ -280,13 +287,63 @@ export class AIService {
   private postProcessResults(products: Product[], query: string): Product[] {
     console.log(`[AIService] postProcessResults: input ${products.length} products`);
     
-    // Extract attributes from query for deduplication logic
-    const hasColorKeyword = /beyaz|siyah|white|black|k[ıi]rm[ıi]z[ıi]|mavi|ye[şs]il|gri/i.test(query);
-    const sizeMatch = query.match(/\b(\d{1,2}(?:\.\d)?)\s*(?:numara|beden|size)?\b/i);
-    const requestedSize = sizeMatch ? sizeMatch[1] : null;
+    // Extract attributes from query using utility functions
+    const requestedSize = extractSize(query);
+    const requestedColor = extractColor(query);
+    const requestedBrand = extractBrand(query);
+    const requestedGender = extractGender(query);
+    
+    console.log(`[AIService] Extracted filters:`, {
+      size: requestedSize,
+      color: requestedColor,
+      brand: requestedBrand,
+      gender: requestedGender
+    });
+    
+    const hasColorKeyword = requestedColor !== null;
+
+    // ✨ CRITICAL FIX: Category hard filtering
+    // If user explicitly mentions a category, ONLY show that category
+    const normalizeText = (text: string) => normalizeTurkish(text.toLowerCase());
+    const normalizedQuery = normalizeText(query);
+    
+    const categoryKeywords = {
+      'ayakkabi': ['ayakkab', 'shoe', 'sneaker', 'spor ayak'],
+      'bot': ['bot', 'boot'],
+      'canta': ['canta', 'bag', 'backpack'],
+      'terlik': ['terlik', 'sandal'],
+      'corap': ['corap', 'sock'],
+      'tshirt': ['tshirt', 't-shirt', 'tisort', 'ust giyim'],
+      'sort': ['sort', 'short'],
+      'esofman': ['esofman', 'tracksuit', 'jogger'],
+    };
+    
+    let requiredCategory: string[] | null = null;
+    for (const [catName, catVariants] of Object.entries(categoryKeywords)) {
+      for (const variant of catVariants) {
+        if (normalizedQuery.includes(variant)) {
+          requiredCategory = catVariants;
+          console.log(`[AIService] 🏷️ CATEGORY FILTER: "${catName}" -> must match:`, catVariants.join(', '));
+          break;
+        }
+      }
+      if (requiredCategory) break;
+    }
+
+    // Apply category filter FIRST
+    let filtered = products;
+    if (requiredCategory) {
+      filtered = products.filter(p => {
+        const pType = normalizeText(p.productType || '');
+        const pTitle = normalizeText(p.title);
+        const hasCategory = requiredCategory!.some(cat => pType.includes(cat) || pTitle.includes(cat));
+        return hasCategory;
+      });
+      console.log(`[AIService] ✅ After category filter: ${products.length} -> ${filtered.length} products`);
+    }
 
     // Filter out of stock products
-    let filtered = products.filter(p => {
+    filtered = filtered.filter(p => {
       const availability = p.availability?.toLowerCase() || '';
       return availability.includes('in stock') || availability.includes('stokta') || !p.availability;
     });
@@ -312,53 +369,74 @@ export class AIService {
 
     // SMART: Size filter with fallback to nearby sizes
     if (requestedSize) {
-      console.log(`[AIService] Filtering for exact size: ${requestedSize}`);
-      console.log(`[AIService] Available sizes in filtered products:`, [...new Set(filtered.slice(0, 30).map(p => p.size))].join(', '));
+      console.log(`[AIService] 🎯 SIZE FILTER: Requested size = ${requestedSize}`);
+      const availableSizes = [...new Set(filtered.map(p => p.size).filter(Boolean))];
+      console.log(`[AIService] Available sizes (${availableSizes.length}):`, availableSizes.slice(0, 20).join(', '));
       
       // Try exact match first
-      const exactSizeFiltered = filtered.filter(p => {
-        if (!p.size) return false;
-        const productSize = String(p.size).trim();
-        
-        // Reject size ranges (e.g., "43-46") when user asks for exact size
-        if (productSize.includes('-')) {
-          return false;
-        }
-        
-        const querySizeNum = parseFloat(requestedSize);
-        const productSizeNum = parseFloat(productSize);
-        
-        // Exact match or decimal variations (e.g., "42" matches "42.0")
-        return productSize === requestedSize || 
-               (!isNaN(productSizeNum) && !isNaN(querySizeNum) && productSizeNum === querySizeNum);
-      });
+      const exactSizeFiltered = this.filterByExactSize(filtered, requestedSize);
       
-      console.log(`[AIService] Exact size filter: ${filtered.length} -> ${exactSizeFiltered.length} products`);
+      console.log(`[AIService] ✓ Exact size (${requestedSize}): ${exactSizeFiltered.length} products`);
       
-      // If exact match found, use it
-      if (exactSizeFiltered.length > 0) {
+      if (exactSizeFiltered.length >= 3) {
+        // Enough exact matches - use them!
         filtered = exactSizeFiltered;
+        console.log(`[AIService] ✅ Using exact size matches`);
+      } else if (exactSizeFiltered.length > 0) {
+        // Some exact matches but not many - keep them but also try nearby
+        const nearbySizeFiltered = this.filterByNearbySize(filtered, requestedSize, 1.0);
+        console.log(`[AIService] ⚠️ Only ${exactSizeFiltered.length} exact - trying nearby: ${nearbySizeFiltered.length}`);
+        
+        if (nearbySizeFiltered.length > exactSizeFiltered.length * 2) {
+          // Nearby sizes give much more results
+          filtered = nearbySizeFiltered;
+          console.log(`[AIService] ✅ Using nearby sizes (±1)`);
+        } else {
+          filtered = exactSizeFiltered;
+          console.log(`[AIService] ✅ Using exact size matches (few nearby)`);
+        }
       } else {
-        // NO exact match - try nearby sizes (±1 size)
-        const querySizeNum = parseFloat(requestedSize);
-        const nearbySizeFiltered = filtered.filter(p => {
-          if (!p.size) return false;
-          const productSize = String(p.size).trim();
-          
-          if (productSize.includes('-')) return false;
-          
-          const productSizeNum = parseFloat(productSize);
-          if (isNaN(productSizeNum) || isNaN(querySizeNum)) return false;
-          
-          // Allow ±1 size tolerance (e.g., for 43: accept 42, 42.5, 43.5, 44)
-          const sizeDiff = Math.abs(productSizeNum - querySizeNum);
-          return sizeDiff <= 1.0;
-        });
+        // NO exact match - try nearby sizes (±1)
+        const nearbySizeFiltered = this.filterByNearbySize(filtered, requestedSize, 1.0);
+        console.log(`[AIService] ❌ No exact match - trying nearby (±1): ${nearbySizeFiltered.length}`);
         
-        console.log(`[AIService] Nearby size filter (±1): ${nearbySizeFiltered.length} products`);
+        if (nearbySizeFiltered.length === 0) {
+          // Still nothing - try wider range (±2)
+          const widerSizeFiltered = this.filterByNearbySize(filtered, requestedSize, 2.0);
+          console.log(`[AIService] ❌ No nearby - trying wider (±2): ${widerSizeFiltered.length}`);
+          filtered = widerSizeFiltered;
+        } else {
+          filtered = nearbySizeFiltered;
+        }
+      }
+    }
+    
+    // Brand filter (if extracted)
+    if (requestedBrand && filtered.length > 0) {
+      const brandFiltered = filtered.filter(p => 
+        p.brand?.toLowerCase().includes(requestedBrand.toLowerCase())
+      );
+      console.log(`[AIService] 🏷️ Brand filter (${requestedBrand}): ${filtered.length} -> ${brandFiltered.length}`);
+      if (brandFiltered.length > 0) {
+        filtered = brandFiltered;
+      }
+    }
+    
+    // Gender filter (if extracted)
+    if (requestedGender && filtered.length > 0) {
+      const genderFiltered = filtered.filter(p => {
+        const productGender = p.gender?.toLowerCase() || '';
+        const productType = p.productType?.toLowerCase() || '';
+        const targetGender = requestedGender.toLowerCase();
         
-        // Use nearby sizes if found, otherwise keep empty to let AI handle it
-        filtered = nearbySizeFiltered;
+        // Match gender or unisex
+        return productGender.includes(targetGender) || 
+               productGender.includes('unisex') ||
+               productType.includes(targetGender === 'male' ? 'erkek' : 'kadın');
+      });
+      console.log(`[AIService] 👤 Gender filter (${requestedGender}): ${filtered.length} -> ${genderFiltered.length}`);
+      if (genderFiltered.length > 0) {
+        filtered = genderFiltered;
       }
     }
 
@@ -397,20 +475,7 @@ export class AIService {
     
     // If size was requested, filter for nearby sizes (±2 sizes for alternatives)
     if (requestedSize) {
-      const querySizeNum = parseFloat(requestedSize);
-      const nearbySizeFiltered = filtered.filter(p => {
-        if (!p.size) return false;
-        const productSize = String(p.size).trim();
-        
-        if (productSize.includes('-')) return false;
-        
-        const productSizeNum = parseFloat(productSize);
-        if (isNaN(productSizeNum) || isNaN(querySizeNum)) return false;
-        
-        // Allow ±2 size tolerance for alternatives (e.g., for 43: accept 41, 42, 43, 44, 45)
-        const sizeDiff = Math.abs(productSizeNum - querySizeNum);
-        return sizeDiff <= 2.0;
-      });
+      const nearbySizeFiltered = this.filterByNearbySize(filtered, requestedSize, 2.0);
       
       console.log(`[AIService] Nearby size filter (±2) for alternatives: ${filtered.length} -> ${nearbySizeFiltered.length} products`);
       filtered = nearbySizeFiltered;
@@ -594,7 +659,32 @@ export class AIService {
       women: /kadın|women|bayan/i.test(query),
     };
 
-    // Filter: in stock products + price range only
+    // ✨ CRITICAL FIX: Category hard filtering
+    // If user explicitly mentions a category, ONLY show that category
+    const categoryKeywords = {
+      'ayakkabi': ['ayakkab', 'shoe', 'sneaker', 'spor ayak'],
+      'bot': ['bot', 'boot'],
+      'canta': ['canta', 'bag', 'backpack'],
+      'terlik': ['terlik', 'sandal'],
+      'corap': ['corap', 'sock'],
+      'tshirt': ['tshirt', 't-shirt', 'tisort', 'ust giyim'],
+      'sort': ['sort', 'short'],
+      'esofman': ['esofman', 'tracksuit', 'jogger'],
+    };
+    
+    let requiredCategory: string[] | null = null;
+    for (const [catName, catVariants] of Object.entries(categoryKeywords)) {
+      for (const variant of catVariants) {
+        if (normalizedQuery.includes(variant)) {
+          requiredCategory = catVariants;
+          console.log(`[AIService] 🏷️ Category filter active: "${catName}" -> productType must contain one of:`, catVariants.slice(0, 3));
+          break;
+        }
+      }
+      if (requiredCategory) break;
+    }
+
+    // Filter: in stock products + price range + CATEGORY
     const eligibleProducts = products.filter((p) => {
       // Check availability
       const availability = p.availability?.toLowerCase() || '';
@@ -610,13 +700,24 @@ export class AIService {
         }
       }
       
+      // ✨ NEW: Category hard filter
+      if (requiredCategory) {
+        const pType = normalizeText(p.productType || '');
+        const pTitle = normalizeText(p.title);
+        const hasCategory = requiredCategory.some(cat => pType.includes(cat) || pTitle.includes(cat));
+        if (!hasCategory) return false; // ❌ Wrong category, filter out!
+      }
+      
       return true;
     });
+
+    console.log(`[AIService] After category filter: ${products.length} -> ${eligibleProducts.length} products`);
 
     const scored = eligibleProducts.map((product) => {
       let score = 0;
       const productText = normalizeText(`${product.title} ${product.description} ${product.productType || ''} ${product.googleProductCategory || ''}`);
       const productTitle = normalizeText(product.title);
+      const productTypeNorm = normalizeText(product.productType || '');
       
       // Check size match (high priority)
       if (searchedSize && product.size) {
@@ -666,8 +767,7 @@ export class AIService {
           if (productTitle.includes(keyword)) score += 15;
           
           // Very high priority: keyword in product category/type
-          const productType = normalizeText(product.productType || '');
-          if (productType.includes(keyword)) score += 20;
+          if (productTypeNorm.includes(keyword)) score += 20;
           
           // Medium priority: keyword in description or other text
           if (productText.includes(keyword)) score += 5;
@@ -704,6 +804,13 @@ export class AIService {
     const sorted = scored
       .filter((s) => s.score > 0)
       .sort((a, b) => b.score - a.score);
+
+    // DEBUG: Log top 10 scores
+    console.log(`[AIService] 🎯 Top 10 scores:`, sorted.slice(0, 10).map(s => ({
+      score: s.score,
+      title: s.product.title.substring(0, 50),
+      productType: s.product.productType?.substring(0, 30) || 'N/A'
+    })));
 
     // Deduplicate products based on what user specified
     let deduplicated = sorted;
@@ -934,13 +1041,17 @@ Başka ürün önerileri görmek ister misiniz?"`;
    * Handles follow-up questions like "erkek için var mı" by including previous context
    */
   private buildSearchQuery(currentMessage: string, history: ChatMessage[]): string {
-    const normalized = currentMessage.toLowerCase().trim();
+    const normalized = currentMessage.toLowerCase().trim()
+      // Normalize Turkish characters for pattern matching
+      .replace(/ü/g, 'u').replace(/ğ/g, 'g').replace(/ş/g, 's')
+      .replace(/ı/g, 'i').replace(/ö/g, 'o').replace(/ç/g, 'c');
     
     // Check if current message is a simple continuation request
     const isContinuationRequest = 
-      /^(evet|tamam|olur|göster|yes|ok)$/i.test(normalized) ||
-      /(başka|daha\s*(fazla|çok)|more|diğer|other|farklı).*(ürün|product|var|göster|show|öneri)/i.test(normalized) ||
-      /(bunlar(dan)?\s*başka|bunun\s*dışında)/i.test(normalized);
+      /^(evet|tamam|olur|goster|yes|ok)(\s+(lutfen|please))?$/i.test(normalized) ||
+      /^(lutfen|please)$/i.test(normalized) ||
+      /(baska|daha\s*(fazla|cok)|more|diger|other|farkli).*(urun|product|var|goster|show|oneri)/i.test(normalized) ||
+      /(bunlar(dan)?\s*baska|bunun\s*disinda)/i.test(normalized);
     
     if (isContinuationRequest && history.length > 0) {
       // Find the most recent user message with product context
@@ -950,12 +1061,12 @@ Başka ürün önerileri görmek ister misiniz?"`;
           // Check if it contains meaningful search criteria
           const hasSearchContext = 
             /\d{1,2}(?:\.\d)?\s*(numara|beden|size)/i.test(userMsg) ||
-            /(ayakkab[ıi]|bot|sneaker|koşu|terlik|[çc]orap|[çc]anta|bag)/i.test(userMsg) ||
-            /(erkek|kad[ıi]n|unisex|[çc]ocuk)/i.test(userMsg) ||
+            /(ayakkab[ıi]|bot|sneaker|koşu|kosu|terlik|[çc]orap|[çc]anta|bag)/i.test(userMsg) ||
+            /(erkek|kad[ıi]n|kadin|unisex|[çc]ocuk)/i.test(userMsg) ||
             /\d{3,5}\s*-?\s*\d{0,5}\s*(tl|₺)/i.test(userMsg); // Price range
           
           if (hasSearchContext) {
-            console.log(`[AIService] Continuation request detected, reusing context: "${userMsg}"`);
+            console.log(`[AIService] ✓ Continuation request detected, reusing context: "${userMsg}"`);
             return userMsg; // Reuse the entire search query
           }
         }
@@ -965,9 +1076,9 @@ Başka ürün önerileri görmek ister misiniz?"`;
     // Check if current message is context-dependent (short follow-up question)
     const isFollowUpQuestion = 
       // Questions about variations
-      /^(erkek|kadin|kız|unisex|beyaz|siyah|kırmızı|mavi).*(var\s*m[ıi]|olur\s*mu|bulunur\s*mu)/i.test(normalized) ||
+      /^(erkek|kadin|kiz|unisex|beyaz|siyah|kirmizi|mavi).*(var\s*m[ıi]|olur\s*mu|bulunur\s*mu)/i.test(normalized) ||
       // Short modifications
-      /^(erkek|kadin|kız|unisex|beyaz|siyah|kırmızı|mavi).*(için|olsun|istiyorum)/i.test(normalized) ||
+      /^(erkek|kadin|kiz|unisex|beyaz|siyah|kirmizi|mavi).*(icin|olsun|istiyorum)/i.test(normalized) ||
       // Question words without product type
       (/(var\s*m[ıi]|olur\s*mu|bulunur\s*mu)/i.test(normalized) && normalized.split(/\s+/).length <= 5);
     
@@ -1275,5 +1386,70 @@ Başka ürün önerileri görmek ister misiniz?"`;
         queryType: 'irrelevant',
       },
     };
+  }
+
+  /**
+   * Filter products by exact size match
+   * Handles decimal variations (e.g., "42" matches "42.0")
+   * Rejects size ranges (e.g., "43-46")
+   */
+  private filterByExactSize(products: Product[], requestedSize: string): Product[] {
+    return products.filter(p => {
+      if (!p.size) return false;
+      
+      const productSize = String(p.size).trim();
+      
+      // Reject size ranges
+      if (productSize.includes('-') || productSize.includes('/')) {
+        return false;
+      }
+      
+      // String exact match
+      if (productSize === requestedSize) {
+        return true;
+      }
+      
+      // Numeric match (handles "42" vs "42.0")
+      const querySizeNum = parseFloat(requestedSize);
+      const productSizeNum = parseFloat(productSize);
+      
+      if (isNaN(productSizeNum) || isNaN(querySizeNum)) {
+        return false;
+      }
+      
+      return Math.abs(productSizeNum - querySizeNum) < 0.001;
+    });
+  }
+
+  /**
+   * Filter products by nearby size (within tolerance)
+   * @param tolerance - Size difference tolerance (e.g., 1.0 for ±1 size)
+   */
+  private filterByNearbySize(products: Product[], requestedSize: string, tolerance: number): Product[] {
+    const querySizeNum = parseFloat(requestedSize);
+    
+    if (isNaN(querySizeNum)) {
+      return [];
+    }
+    
+    return products.filter(p => {
+      if (!p.size) return false;
+      
+      const productSize = String(p.size).trim();
+      
+      // Reject size ranges
+      if (productSize.includes('-') || productSize.includes('/')) {
+        return false;
+      }
+      
+      const productSizeNum = parseFloat(productSize);
+      
+      if (isNaN(productSizeNum)) {
+        return false;
+      }
+      
+      const sizeDiff = Math.abs(productSizeNum - querySizeNum);
+      return sizeDiff <= tolerance;
+    });
   }
 }

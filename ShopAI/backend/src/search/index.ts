@@ -10,6 +10,9 @@ export { AttributeBooster } from './AttributeBooster';
 export { ProductIndexer } from './ProductIndexer';
 export { MerchandisingEngine } from './MerchandisingEngine';
 
+// Export utility functions
+export * from './utils';
+
 export type {
   SearchableProduct,
   ExtractedAttributes,

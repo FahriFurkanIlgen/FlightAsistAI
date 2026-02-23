@@ -85,7 +85,7 @@ const initializeFeeds = async () => {
     const siteName = process.env.SITE_NAME || 'High5 Turkey';
     
     if (feedUrl) {
-      await feedParserService.parseFeed('high5-tr', siteName, feedUrl);
+      await feedParserService.parseFeed('high5', siteName, feedUrl);
       console.log('✅ Product feeds initialized successfully');
     } else {
       console.warn('⚠️  No feed URL configured. Set HIGH5_FEED_URL in .env');
