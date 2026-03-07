@@ -277,7 +277,7 @@ class ChatWidget {
     if (role === 'assistant') {
       const avatar = document.createElement('div');
       avatar.className = 'message-avatar';
-      avatar.innerHTML = '<img src="images/sunexpress-icon.svg" alt="SunExpress AI" />';
+      avatar.innerHTML = '<img src="images/sunexpress-icon.png" alt="SunExpress AI" />';
       messageDiv.appendChild(avatar);
     }
     
