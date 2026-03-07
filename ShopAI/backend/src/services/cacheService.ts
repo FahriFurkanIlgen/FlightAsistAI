@@ -1,5 +1,5 @@
 import NodeCache from 'node-cache';
-import { GoogleFeed, Product } from '../../../shared/types';
+import { FlightFeed, Flight } from '../../../shared/types';
 import { SearchService } from '../search';
 import { WidgetConfig, QueryParserVersion } from '../../../shared/types/config';
 
@@ -75,16 +75,16 @@ export class CacheService {
   }
 
   // Specific methods for our use case
-  public getFeed(siteId: string): GoogleFeed | undefined {
-    return this.get<GoogleFeed>(`feed:${siteId}`);
+  public getFeed(siteId: string): FlightFeed | undefined {
+    return this.get<FlightFeed>(`feed:${siteId}`);
   }
 
-  public setFeed(feed: GoogleFeed): boolean {
+  public setFeed(feed: FlightFeed): boolean {
     const success = this.set(`feed:${feed.siteId}`, feed);
     
-    if (success && feed.products && feed.products.length > 0) {
+    if (success && feed.flights && feed.flights.length > 0) {
       // Build search index when feed is updated
-      this.buildSearchIndex(feed.siteId, feed.products);
+      this.buildSearchIndex(feed.siteId, feed.flights);
     }
     
     return success;
@@ -93,13 +93,13 @@ export class CacheService {
   /**
    * Build or rebuild search index for a site
    */
-  private buildSearchIndex(siteId: string, products: Product[]): void {
+  private buildSearchIndex(siteId: string, flights: Flight[]): void {
     try {
-      console.log(`[CacheService] buildSearchIndex called with ${products.length} products`);
+      console.log(`[CacheService] buildSearchIndex called with ${flights.length} flights`);
       
-      // Debug: Count size 28 products
-      const size28Count = products.filter(p => p.size === '28').length;
-      console.log(`[CacheService] Products with size=28: ${size28Count}`);
+      // Debug: Count direct flights
+      const directCount = flights.filter(f => f.stops === 0).length;
+      console.log(`[CacheService] Direct flights: ${directCount}`);
       
       let searchService = this.searchServices.get(siteId);
       
@@ -116,7 +116,7 @@ export class CacheService {
         searchService.setParserVersion(parserVersion);
       }
       
-      searchService.buildIndex(products);
+      searchService.buildIndex(flights);
       console.log(`🔍 Search index built for ${siteId}`);
     } catch (error) {
       console.error(`Error building search index for ${siteId}:`, error);
@@ -133,7 +133,7 @@ export class CacheService {
   /**
    * Use hybrid search engine (BM25 + attribute boosting)
    */
-  public async hybridSearch(siteId: string, query: string, topK: number = 10): Promise<Product[]> {
+  public async hybridSearch(siteId: string, query: string, topK: number = 10): Promise<Flight[]> {
     const searchService = this.getSearchService(siteId);
     
     if (searchService && searchService.isReady()) {
@@ -143,176 +143,88 @@ export class CacheService {
     
     // Fallback to simple search
     console.warn(`[CacheService] Hybrid search not available for ${siteId}, using fallback`);
-    return this.searchProducts(siteId, query).slice(0, topK);
+    return this.searchFlights(siteId, query).slice(0, topK);
   }
 
-  public getProducts(siteId: string): Product[] | undefined {
+  public getFlights(siteId: string): Flight[] | undefined {
     const feed = this.getFeed(siteId);
-    return feed?.products;
+    return feed?.flights;
   }
 
   /**
-   * Get all products from all sites (for GraphDB sync)
+   * Get all flights from all sites (for GraphDB sync)
    */
-  public getAllProducts(): Product[] {
-    const allProducts: Product[] = [];
+  public getAllFlights(): Flight[] {
+    const allFlights: Flight[] = [];
     const keys = this.cache.keys();
     
     // Get all feed keys
     const feedKeys = keys.filter(key => key.startsWith('feed:'));
     
     for (const key of feedKeys) {
-      const feed = this.get<GoogleFeed>(key);
-      if (feed && feed.products) {
-        allProducts.push(...feed.products);
+      const feed = this.get<FlightFeed>(key);
+      if (feed && feed.flights) {
+        allFlights.push(...feed.flights);
       }
     }
     
-    console.log(`[CacheService] getAllProducts: Found ${allProducts.length} products from ${feedKeys.length} sites`);
-    return allProducts;
+    console.log(`[CacheService] getAllFlights: Found ${allFlights.length} flights from ${feedKeys.length} sites`);
+    return allFlights;
   }
 
-  public searchProducts(siteId: string, query: string): Product[] {
-    const products = this.getProducts(siteId);
-    if (!products || !query) return [];
+  public searchFlights(siteId: string, query: string, filters?: any): Flight[] {
+    const flights = this.getFlights(siteId);
+    if (!flights || !query) return [];
 
     const lowerQuery = query.toLowerCase();
-    return products.filter(
-      (p) =>
-        p.title.toLowerCase().includes(lowerQuery) ||
-        p.description.toLowerCase().includes(lowerQuery) ||
-        p.brand?.toLowerCase().includes(lowerQuery)
+    return flights.filter(
+      (f) =>
+        f.airline.toLowerCase().includes(lowerQuery) ||
+        f.departure.city.toLowerCase().includes(lowerQuery) ||
+        f.arrival.city.toLowerCase().includes(lowerQuery) ||
+        f.flightNumber.toLowerCase().includes(lowerQuery)
     );
   }
 
-  public async filterProductsByCategory(siteId: string, keywords: string[]): Promise<Product[]> {
-    const products = this.getProducts(siteId);
-    if (!products || !keywords || keywords.length === 0) return [];
+  public async filterFlightsByRoute(siteId: string, from: string, to: string): Promise<Flight[]> {
+    const flights = this.getFlights(siteId);
+    if (!flights || !from || !to) return [];
 
-    // Step 1: Filter products by category using exact matching on productType and gender
-    const categoryFiltered = products.filter((p) => {
-      const genderText = (p.gender || '').toLowerCase();
-      const productTypeText = (p.productType || '').toLowerCase();
-      const titleText = (p.title || '').toLowerCase();
-      const descriptionText = (p.description || '').toLowerCase();
+    // Filter flights by route
+    const routeFiltered = flights.filter((f) => {
+      const departureCity = f.departure.city.toLowerCase();
+      const arrivalCity = f.arrival.city.toLowerCase();
+      const lowerFrom = from.toLowerCase();
+      const lowerTo = to.toLowerCase();
       
-      return keywords.some((keyword) => {
-        const lowerKeyword = keyword.toLowerCase();
-        
-        // For kids/children category, strictly check productType and gender
-        if (lowerKeyword === 'kids' || lowerKeyword === 'çocuk' || lowerKeyword === 'children') {
-          return productTypeText.includes('çocuk') || genderText.includes('çocuk');
-        }
-        
-        // For gender-specific categories (erkek/kadın)
-        if (lowerKeyword === 'erkek' || lowerKeyword === 'kadın') {
-          return genderText.includes(lowerKeyword) || productTypeText.includes(lowerKeyword);
-        }
-        
-        // For other categories (spor, athletic, running, etc.)
-        return titleText.includes(lowerKeyword) || 
-               productTypeText.includes(lowerKeyword) ||
-               descriptionText.includes(lowerKeyword);
-      });
+      return departureCity.includes(lowerFrom) && arrivalCity.includes(lowerTo);
     });
 
-    console.log(`[CacheService] Category filter: ${keywords.join(', ')} -> ${categoryFiltered.length} products found`);
+    console.log(`[CacheService] Route filter: ${from} -> ${to}: ${routeFiltered.length} flights found`);
 
-    // Step 2: Deduplicate the filtered products
-    // Pick best variant based on discount and stock
-    const deduplicated = this.deduplicateProducts(categoryFiltered);
-    
-    console.log(`[CacheService] After deduplication: ${deduplicated.length} unique products`);
-
-    // Step 3: Sort by discount percentage (highest first)
-    deduplicated.sort((a, b) => {
-      const discountA = this.getDiscountPercentage(a);
-      const discountB = this.getDiscountPercentage(b);
-      
-      if (discountA !== discountB) {
-        return discountB - discountA; // Higher discount first
+    // Sort by price (lowest first) and stops (direct flights first)
+    routeFiltered.sort((a, b) => {
+      // Prefer direct flights
+      if (a.stops !== b.stops) {
+        return a.stops - b.stops;
       }
       
-      // If same discount, prefer in-stock
-      const aInStock = a.availability === 'in stock' ? 1 : 0;
-      const bInStock = b.availability === 'in stock' ? 1 : 0;
+      // Then by price
+      const aPrice = this.extractPrice(a.price);
+      const bPrice = this.extractPrice(b.price);
+      if (aPrice !== null && bPrice !== null) {
+        return aPrice - bPrice;
+      }
       
-      return bInStock - aInStock;
+      return 0;
     });
 
-    return deduplicated;
+    return routeFiltered;
   }
 
   /**
-   * Deduplicate products by ID, keeping the best variant
-   * Prioritize: 1) Discount percentage 2) Stock availability 3) Size preference
+   * Deduplicate flights by flight number (removed - not needed for flights)
    */
-  private deduplicateProducts(products: Product[]): Product[] {
-    const productMap = new Map<string, Product>();
-    
-    for (const product of products) {
-      const baseId = this.extractBaseProductId(product.id);
-      const existing = productMap.get(baseId);
-      
-      if (!existing) {
-        productMap.set(baseId, product);
-        continue;
-      }
-      
-      // Keep the better variant
-      if (this.isBetterVariant(product, existing)) {
-        productMap.set(baseId, product);
-      }
-    }
-    
-    return Array.from(productMap.values());
-  }
-
-  /**
-   * Extract base product ID (remove size/color variants)
-   */
-  private extractBaseProductId(id: string): string {
-    // Remove common separators and keep the main ID
-    return id.split(/[\s-_]/)[0];
-  }
-
-  /**
-   * Determine if product A is better than product B
-   */
-  private isBetterVariant(productA: Product, productB: Product): boolean {
-    // 1. Prefer in-stock products
-    const aInStock = productA.availability === 'in stock';
-    const bInStock = productB.availability === 'in stock';
-    if (aInStock && !bInStock) return true;
-    if (!aInStock && bInStock) return false;
-    
-    // 2. Prefer higher discount percentage
-    const aDiscount = this.getDiscountPercentage(productA);
-    const bDiscount = this.getDiscountPercentage(productB);
-    if (aDiscount > bDiscount) return true;
-    if (aDiscount < bDiscount) return false;
-    
-    // 3. Prefer lower price (if both have same discount)
-    const aPrice = this.extractPrice(productA.salePrice || productA.price);
-    const bPrice = this.extractPrice(productB.salePrice || productB.price);
-    if (aPrice !== null && bPrice !== null && aPrice < bPrice) return true;
-    
-    return false;
-  }
-
-  /**
-   * Calculate discount percentage
-   */
-  private getDiscountPercentage(product: Product): number {
-    if (!product.salePrice || !product.price) return 0;
-    
-    const originalPrice = this.extractPrice(product.price);
-    const salePrice = this.extractPrice(product.salePrice);
-    
-    if (originalPrice === null || salePrice === null || originalPrice <= salePrice) return 0;
-    
-    return Math.round(((originalPrice - salePrice) / originalPrice) * 100);
-  }
 
   /**
    * Extract numeric price from price string
@@ -334,8 +246,8 @@ export class CacheService {
     
     // Rebuild search index if feed exists (to apply new parser version)
     const feed = this.getFeed(config.siteId);
-    if (feed?.products && feed.products.length > 0) {
-      this.buildSearchIndex(config.siteId, feed.products);
+    if (feed?.flights && feed.flights.length > 0) {
+      this.buildSearchIndex(config.siteId, feed.flights);
     }
   }
 

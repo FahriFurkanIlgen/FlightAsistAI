@@ -1,40 +1,40 @@
 // Search Engine Type Definitions
 
-import { Product } from '../../../shared/types';
+import { Flight } from '../../../shared/types';
 
-export interface SearchableProduct extends Product {
+export interface SearchableFlight extends Flight {
   searchableText: string; // Combined text for BM25
-  normalizedBrand: string;
-  normalizedColor: string;
-  normalizedCategory: string;
-  normalizedSize: string;
+  normalizedAirline: string;
+  normalizedDeparture: string;
+  normalizedArrival: string;
+  normalizedCabinClass: string;
 }
 
 export interface ExtractedAttributes {
-  brand?: string;
-  color?: string;
-  category?: string[];
-  size?: string;
+  airline?: string;
+  departure?: string;
+  arrival?: string;
+  date?: string;
+  cabinClass?: 'economy' | 'business' | 'first';
+  stops?: number; // 0 = direct, 1+ = connecting
   priceRange?: { min?: number; max?: number };
   keywords: string[];
-  isChildQuery?: boolean; // Sorgu çocuk ürünü için mi?
-  gender?: 'erkek' | 'kadin' | 'kiz' | 'unisex'; // Cinsiyet/hedef kitle
-  specialFeatures?: string[]; // İşıklı, su geçirmez, vs
-  sku?: string; // SKU/Product Code
+  passengers?: number;
+  flightNumber?: string;
+  preferredTimes?: string[]; // morning, afternoon, evening, night
 }
 
 /**
  * Query Type Detection Results
  */
 export type QueryType = 
-  | 'sku-exact'        // Exact SKU match: SK2520052-1602
-  | 'sku-partial'      // Partial SKU: SK2520052 (find all variants)
-  | 'sku-fuzzy'        // Fuzzy SKU with typos
-  | 'product-code'     // Product codes: 253010 BBK, 100439
-  | 'size-only'        // Just size: 42, 28, 5-6
-  | 'price-range'      // Price queries: 2000-3000 TL
-  | 'attribute-combo'  // Color + size, brand + model
-  | 'category'         // Category search
+  | 'flight-number'    // Exact flight number: XQ123
+  | 'route-direct'     // Direct route: Istanbul to London
+  | 'route-flexible'   // Flexible route with dates
+  | 'date-specific'    // Specific date search
+  | 'price-range'      // Price queries: 500-1000 EUR
+  | 'attribute-combo'  // Cabin + stops, airline + route
+  | 'destination'      // Destination search
   | 'semantic'         // Natural language
   | 'multi-strategy';  // Combination of multiple types
 
@@ -43,12 +43,12 @@ export interface QueryAnalysisResult {
   secondaryTypes: QueryType[];
   confidence: number;
   detectedPatterns: {
-    sku?: string;
-    partialSku?: string;
-    productCode?: string;
-    size?: string;
+    flightNumber?: string;
+    departure?: string;
+    arrival?: string;
+    date?: string;
     priceRange?: { min?: number; max?: number };
-    category?: string[];
+    destination?: string[];
   };
   shouldTryAllStrategies: boolean;
 }
@@ -58,21 +58,20 @@ export interface QueryAnalysisResult {
  */
 export interface StrategyResult {
   strategy: string;
-  products: Product[];
+  flights: Flight[];
   score: number;
   matchCount: number;
 }
 
-export interface ScoredProduct {
-  product: Product;
+export interface ScoredFlight {
+  flight: Flight;
   scores: {
     bm25: number;
-    brand: number;
-    color: number;
-    category: number;
-    size: number;
-    gender: number;
-    specialFeatures: number;
+    airline: number;
+    route: number;
+    stops: number;
+    cabinClass: number;
+    date: number;
     merchandising?: number;
     final: number;
   };
@@ -81,7 +80,7 @@ export interface ScoredProduct {
 export interface InvertedIndexEntry {
   term: string;
   documentFrequency: number; // Number of documents containing this term
-  postings: Map<string, TermFrequency>; // productId -> term frequency
+  postings: Map<string, TermFrequency>; // flightId -> term frequency
 }
 
 export interface TermFrequency {

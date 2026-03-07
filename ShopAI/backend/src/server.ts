@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
 import chatRouter from './routes/chat';
-import productsRouter from './routes/products';
+import flightsRouter from './routes/flights';
 import configRouter from './routes/config';
 import searchRouter from './routes/search';
 import merchandisingRouter from './routes/merchandising';
@@ -63,7 +63,7 @@ app.use((req: Request, _res: Response, next) => {
 
 // Routes
 app.use('/api/chat', chatRouter);
-app.use('/api/products', productsRouter);
+app.use('/api/flights', flightsRouter);
 app.use('/api/config', configRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/merchandising', merchandisingRouter);

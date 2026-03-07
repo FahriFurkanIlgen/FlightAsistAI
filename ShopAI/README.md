@@ -1,6 +1,6 @@
-# ShopAsistAI
+# FlightAsistAI
 
-E-ticaret siteleri için yapay zeka destekli alışveriş asistanı widget'ı. Google Shopping Feed'lerinden ürün verilerini okuyarak, kullanıcılara akıllı ürün önerileri sunar ve doğal dil ile sohbet eder. **Loops.so** tarzında embeddable popup widget olarak çalışır.
+Havayolu şirketleri için yapay zeka destekli uçuş arama asistanı widget'ı. SunExpress tarzında akıllı uçuş araması, kullanıcılara doğal dil ile uçuş önerileri sunar ve kolayca rezervasyon yapmalarını sağlar. **Loops.so** tarzında embeddable popup widget olarak çalışır.
 
 ## 🎯 Özellikler
 
@@ -8,27 +8,27 @@ E-ticaret siteleri için yapay zeka destekli alışveriş asistanı widget'ı. G
 - ✅ **Embeddable Widget**: Tek script tag ile herhangi bir siteye entegre edilebilir
 - ✅ **Shadow DOM Isolation**: Müşteri sitesinin CSS'i ile hiçbir çakışma olmaz
 - ✅ **Otomatik Yükleme**: widget-loader.js widget'ı otomatik inject eder
-- ✅ **Multi-Tenant**: Her müşteri için ayrı config ve API key sistemi
+- ✅ **Multi-Tenant**: Her havayolu şirketi için ayrı config ve API key sistemi
 - ✅ **Admin Dashboard**: Müşteri yönetimi ve entegrasyon kod üretimi
 
 ### 💬 Widget Özellikleri
 - ✅ **Popup Chat Widget**: Loops.so/Intercom tarzında modern popup chatbot
-- ✅ **Dışardan Yapılandırma**: Site ismi, logo, renkler, kategoriler config ile özelleştirilebilir
-- ✅ **Kategorize Ürün Önerileri**: Kategori butonları ile hızlı ürün filtreleme (👟 Shoes, ⚽ Sports, vb.)
+- ✅ **Dışardan Yapılandırma**: Havayolu ismi, logo, renkler, destinasyonlar config ile özelleştirilebilir
+- ✅ **Popüler Destinasyonlar**: Hızlı erişim butonları ile popüler uçuşlar (✈️ İstanbul, 🏖️ Antalya, vb.)
 - ✅ **Hoş Geldin Mesajı**: Özelleştirilebilir karşılama ekranı
 - ✅ **Privacy Policy & Branding**: Gizlilik politikası uyarısı ve markalama footer'ı
 
 ### 🔍 Arama & AI
-- ✅ **Google Shopping Feed Entegrasyonu**: XML/RSS formatında ürün feed'lerini otomatik olarak parse eder
-- ✅ **Gelişmiş Arama Motoru**: BM25 + Hybrid search ile text ve attribute matching
-- ✅ **Search Merchandising**: Popülerlik, stok, yeni ürün, kampanya bazlı dinamik ranking
-- ✅ **GraphDB Entegrasyonu**: Neo4j ile ilişki tabanlı ürün önerileri
-- ✅ **Akıllı Önbellek Sistemi**: Ürün verilerini 1 saat boyunca cache'de tutar
-- ✅ **Otomatik Güncelleme**: Her saat başında ürün verilerini otomatik olarak yeniler
-- ✅ **AI Destekli Sohbet**: OpenAI GPT-4 ile doğal dil kullanarak ürün önerileri
+- ✅ **Akıllı Uçuş Arama**: Kalkış-varış noktası, tarih, yolcu sayısı ile gelişmiş arama
+- ✅ **Gelişmiş Arama Motoru**: BM25 + Hybrid search ile metin ve öznitelik eşleştirme
+- ✅ **Dinamik Sıralama**: Fiyat, süre, aktarma sayısı, popülerlik bazlı akıllı sıralama
+- ✅ **GraphDB Entegrasyonu**: Neo4j ile ilişki tabanlı uçuş önerileri
+- ✅ **Akıllı Önbellek Sistemi**: Uçuş verilerini 1 saat boyunca cache'de tutar
+- ✅ **Otomatik Güncelleme**: Her saat başında uçuş verilerini otomatik olarak yeniler
+- ✅ **AI Destekli Sohbet**: OpenAI GPT-4 ile doğal dil kullanarak uçuş önerileri
 
 ### 🏗️ Teknik Özellikler
-- ✅ **Modüler Yapı**: Farklı e-ticaret siteleri için kolayca genişletilebilir
+- ✅ **Modüler Yapı**: Farklı havayolu şirketleri için kolayca genişletilebilir
 - ✅ **RESTful API**: Backend API ile frontend'i bağımsız kullanabilme
 - ✅ **API Key Authentication**: Güvenli tenant yönetimi
 - ✅ **Quota Management**: Plan bazlı kullanım limitleri
@@ -55,8 +55,8 @@ En basit yöntem - tek bir script tag ile entegre edin:
 ```html
 <!-- Müşterinin sitesine ekleyeceği KOD -->
 <script>
-  window.ShopAsistConfig = {
-    siteId: 'high5-tr',
+  window.FlightAsistConfig = {
+    siteId: 'sunexpress-tr',
     apiUrl: 'http://localhost:3000',
     widgetUrl: 'http://localhost:3001'
   };
@@ -71,10 +71,10 @@ Widget otomatik olarak sayfaya enjekte edilir - HTML değişikliği gerekmez!
 Daha fazla kontrol için widget HTML'ini manuel ekleyin:
 
 ```html
-<!-- ShopAsist AI Widget -->
+<!-- FlightAsist AI Widget -->
 <script>
-  window.ShopAsistConfig = {
-    siteId: 'high5-tr',
+  window.FlightAsistConfig = {
+    siteId: 'sunexpress-tr',
     apiUrl: 'http://localhost:3000'
   };
 </script>
@@ -110,15 +110,15 @@ npm run dev
 ChatGPT benzeri tam sayfa arayüz! Popup olmadan, doğrudan sohbet deneyimi.
 - ✅ Tam ekran modern arayüz
 - ✅ Mesaj geçmişi
-- ✅ Ürünler grid view ile gösterilir
-- ✅ Marketplace yapısına uygun (çok markalı)
+- ✅ Uçuşlar grid view ile gösterilir
+- ✅ Çoklu havayolu desteği
 
 **2. Widget Loader Demo ⭐**
 ```bash
 npm run dev
 # Tarayıcıda: http://localhost:3001/embed-demo.html
 ```
-Gerçek bir High5 sitesini simüle eder. Widget tek script ile otomatik eklenir.
+Gerçek bir SunExpress sitesini simüle eder. Widget tek script ile otomatik eklenir.
 
 **3. Shadow DOM Isolation Test 🧪**
 ```bash

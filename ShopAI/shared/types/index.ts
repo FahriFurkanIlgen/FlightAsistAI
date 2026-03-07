@@ -1,32 +1,45 @@
-// Shared type definitions for ShopAsistAI
+// Shared type definitions for FlightAsistAI
 
-export interface Product {
+export interface Flight {
   id: string;
-  title: string;
-  description: string;
-  link: string;
-  imageLink: string;
+  flightNumber: string;
+  airline: string;
+  departure: {
+    airport: string;
+    city: string;
+    country: string;
+    date: string;
+    time: string;
+    terminal?: string;
+  };
+  arrival: {
+    airport: string;
+    city: string;
+    country: string;
+    date: string;
+    time: string;
+    terminal?: string;
+  };
+  duration: string; // "2h 30m"
   price: string;
-  salePrice?: string;
-  availability: string;
-  brand?: string;
-  gtin?: string;
-  mpn?: string;
-  condition?: string;
-  googleProductCategory?: string;
-  productType?: string;
-  additionalImageLinks?: string[];
-  color?: string;
-  size?: string;
-  gender?: string; // Erkek, Kadın, Kız, Erkek Çocuk, etc.
+  currency: string;
+  availability: string; // "available", "limited", "soldout"
+  aircraftType?: string;
+  stops: number; // 0 for direct, 1+ for connecting
+  stopCities?: string[];
+  cabinClass: 'economy' | 'business' | 'first';
+  bookingLink: string;
+  fareType?: string; // "standard", "flex", "promo"
+  baggageAllowance?: string;
+  amenities?: string[];
 }
 
-export interface GoogleFeed {
+export interface FlightFeed {
   siteId: string;
   siteName: string;
   feedUrl: string;
   lastUpdated: Date;
-  products: Product[];
+  flights: Flight[];
 }
 
 export interface ChatMessage {
@@ -43,14 +56,14 @@ export interface ChatRequest {
 
 export interface ChatResponse {
   message: string;
-  recommendedProducts?: Product[];
+  recommendedFlights?: Flight[];
   conversationHistory?: ChatMessage[];
   confidence?: number;
   debug?: {
     originalQuery: string;
     enhancedQuery: string;
     isFollowUp: boolean;
-    queryType?: string; // 'irrelevant' for non-product queries
+    queryType?: string;
   };
 }
 

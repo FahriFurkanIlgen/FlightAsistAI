@@ -1,7 +1,7 @@
 {
-  "name": "shopasistai",
+  "name": "flightasistai",
   "version": "1.0.0",
-  "description": "AI-powered shopping assistant for e-commerce sites with product recommendations via Google Feeds",
+  "description": "AI-powered flight search assistant for airlines with intelligent flight search and recommendations",
   "main": "dist/backend/backend/src/server.js",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
@@ -16,11 +16,12 @@
   },
   "keywords": [
     "ai",
-    "shopping",
+    "flight",
+    "search",
     "assistant",
-    "e-commerce",
+    "airline",
     "chatbot",
-    "product-recommendations"
+    "flight-booking"
   ],
   "author": "",
   "license": "ISC",

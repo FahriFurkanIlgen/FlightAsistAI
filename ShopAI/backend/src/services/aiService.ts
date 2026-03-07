@@ -1,8 +1,7 @@
 import OpenAI from 'openai';
-import { ChatMessage, ChatRequest, ChatResponse, Product } from '../../../shared/types';
+import { ChatMessage, ChatRequest, ChatResponse, Flight } from '../../../shared/types';
 import { CacheService } from './cacheService';
 import { SimpleCache } from './simpleCache';
-import { extractSize, extractBrand, extractColor, extractGender, normalizeTurkish } from '../search/utils';
 
 export class AIService {
   private openai: OpenAI;
@@ -31,9 +30,9 @@ export class AIService {
         return irrelevantResponse;
       }
 
-      const products = this.cacheService.getProducts(siteId);
-      if (!products || products.length === 0) {
-        const errorMessage = 'Üzgünüm, şu anda ürün bilgilerine erişemiyorum. Lütfen daha sonra tekrar deneyin.';
+      const flights = this.cacheService.getFlights(siteId);
+      if (!flights || flights.length === 0) {
+        const errorMessage = 'Üzgünüm, şu anda uçuş bilgilerine erişemiyorum. Lütfen daha sonra tekrar deneyin.';
         const updatedHistory: ChatMessage[] = [
           ...conversationHistory,
           { role: 'user', content: message, timestamp: new Date() },
@@ -45,25 +44,18 @@ export class AIService {
         };
       }
 
-      // CHECK FOR SKU/MPN/PRODUCT CODE QUERIES
-      // Pattern: SK2520052-1602, 253010 BBK, 100439-BBK, etc.
-      const skuMatch = message.match(/\b([A-Z]{2,}[\d]{4,}[\-\s]?[\w]{2,}|\d{6}[\-\s]?[A-Z]{2,})\b/i);
-      if (skuMatch) {
-        const skuQuery = skuMatch[1].toUpperCase().replace(/\s+/g, ' ').trim();
-        console.log(`[AIService] SKU/MPN detected: "${skuQuery}"`);
+      // CHECK FOR FLIGHT NUMBER QUERIES
+      const flightMatch = message.match(/\b([A-Z]{2}\d{3,4})\b/i);
+      if (flightMatch) {
+        const flightNumber = flightMatch[1].toUpperCase();
+        console.log(`[AIService] Flight number detected: "${flightNumber}"`);
         
-        // Search for exact SKU match in id or mpn fields
-        const skuProducts = products.filter(p => {
-          const productId = (p.id || '').toUpperCase().replace(/\s+/g, ' ').trim();
-          const productMpn = (p.mpn || '').toUpperCase().replace(/\s+/g, ' ').trim();
-          
-          return productId.includes(skuQuery) || 
-                 productMpn.includes(skuQuery) ||
-                 productId.replace(/[\s\-]/g, '') === skuQuery.replace(/[\s\-]/g, '') ||
-                 productMpn.replace(/[\s\-]/g, '') === skuQuery.replace(/[\s\-]/g, '');
-        });
+        // Search for exact flight match
+        const matchedFlights = flights.filter(f => 
+          f.flightNumber.toUpperCase() === flightNumber
+        );
         
-        console.log(`[AIService] Found ${skuProducts.length} products matching SKU "${skuQuery}"`);
+        console.log(`[AIService] Found ${matchedFlights.length} flights matching "${flightNumber}"`);
         
         if (skuProducts.length > 0) {
           // Deduplicate and sort by availability

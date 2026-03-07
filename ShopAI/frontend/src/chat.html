@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>High5 AI Shopping Assistant</title>
+  <title>SunExpress AI Flight Assistant</title>
   <style>
     * {
       margin: 0;
@@ -550,7 +550,7 @@
       <div class="header-left">
         <div class="logo">
           <div>
-            <div style="display: flex;align-items: center;"><img src="images/highfive.svg" alt="High5 Logo" width="120px;"> AI</div>
+            <div style="display: flex;align-items: center;">✈️ SunExpress AI</div>
           </div>
         </div>
       </div>
@@ -562,25 +562,25 @@
         <!-- Welcome Message -->
         <div class="welcome-message" id="welcomeMessage">
           <h1>👋 Merhaba!</h1>
-          <p>High5'te aradığınız ürünü bulmanıza yardımcı olabilirim</p>
+          <p>Uçuş aramanıza yardımcı olabilirim. Nereye gitmek istersiniz?</p>
           
           <div class="quick-actions">
-            <div class="quick-action" onclick="sendQuickMessage('Koşu ayakkabısı arıyorum')">
-              <div class="quick-action-icon">🏃</div>
-              <div class="quick-action-title">Koşu Ayakkabısı</div>
-              <div class="quick-action-desc">Yüksek performanslı koşu ayakkabıları</div>
+            <div class="quick-action" onclick="sendQuickMessage('İstanbul Antalya uçuşu arıyorum')">
+              <div class="quick-action-icon">✈️</div>
+              <div class="quick-action-title">İstanbul - Antalya</div>
+              <div class="quick-action-desc">Popüler iç hat uçuşları</div>
             </div>          
             
-            <div class="quick-action" onclick="sendQuickMessage('ON marka kadın ayakkabısı')">
-              <div class="quick-action-icon">⭐</div>
-              <div class="quick-action-title">Markaya Göre</div>
-              <div class="quick-action-desc">Favori markanızdan ürünler</div>
+            <div class="quick-action" onclick="sendQuickMessage('Yurt dışı uçuşları göster')">
+              <div class="quick-action-icon">🌍</div>
+              <div class="quick-action-title">Uluslararası Uçuşlar</div>
+              <div class="quick-action-desc">Avrupa ve dış hatlar</div>
             </div>
             
-            <div class="quick-action" onclick="sendQuickMessage('İndirimli ürünler')">
-              <div class="quick-action-icon">🏷️</div>
-              <div class="quick-action-title">İndirimler</div>
-              <div class="quick-action-desc">Kampanyalı ürünleri keşfedin</div>
+            <div class="quick-action" onclick="sendQuickMessage('Direct uçuşlar')">
+              <div class="quick-action-icon">⚡</div>
+              <div class="quick-action-title">Direkt Uçuşlar</div>
+              <div class="quick-action-desc">Aktarmasız seyahat</div>
             </div>
           </div>
         </div>
@@ -593,7 +593,7 @@
         <div class="input-container">
           <textarea 
             id="userInput" 
-            placeholder="Mesajınızı yazın... (örn: 'koşu ayakkabısı arıyorum')"
+            placeholder="Mesajınızı yazın... (örn: 'İstanbul Antalya uçuşu')"
             rows="1"
             onkeydown="handleKeyDown(event)"
           ></textarea>
@@ -607,7 +607,7 @@
 
   <script>
     const API_BASE_URL = 'http://localhost:3000';
-    const SITE_ID = 'high5';
+    const SITE_ID = 'sunexpress';
     let conversationHistory = [];
     let isProcessing = false;
 
@@ -672,8 +672,8 @@
         
         // Debug: Log response data
         console.log('📦 API Response:', data);
-        console.log('🛍️ Products:', data.recommendedProducts);
-        console.log('📊 Products count:', data.recommendedProducts?.length || 0);
+        console.log('✈️ Flights:', data.recommendedFlights);
+        console.log('📊 Flights count:', data.recommendedFlights?.length || 0);
         
         // Remove typing indicator
         removeTypingIndicator(typingId);
@@ -681,8 +681,8 @@
         // Update conversation history
         conversationHistory = data.conversationHistory || [];
         
-        // Add AI response (use recommendedProducts not products!)
-        addMessage('ai', data.message, data.recommendedProducts);
+        // Add AI response (use recommendedFlights not flights!)
+        addMessage('ai', data.message, data.recommendedFlights);
 
       } catch (error) {
         console.error('Error:', error);
@@ -695,14 +695,14 @@
       }
     }
 
-    function addMessage(type, text, products = null) {
+    function addMessage(type, text, flights = null) {
       const messagesContainer = document.getElementById('chatMessages');
       const messageDiv = document.createElement('div');
       messageDiv.className = `message ${type}`;
 
       const avatar = document.createElement('div');
       avatar.className = `avatar ${type}-avatar`;
-      avatar.textContent = type === 'user' ? '👟' : 'AI';
+      avatar.textContent = type === 'user' ? '👤' : '✈️';
 
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';
@@ -723,21 +723,21 @@
 
       messagesContainer.appendChild(messageDiv);
 
-      // Add products if available
-      if (products && products.length > 0) {
-        console.log('✅ Creating product grid with', products.length, 'products');
-        const productsDiv = createProductsGrid(products);
-        messagesContainer.appendChild(productsDiv);
+      // Add flights if available
+      if (flights && flights.length > 0) {
+        console.log('✅ Creating flight grid with', flights.length, 'flights');
+        const flightsDiv = createFlightsGrid(flights);
+        messagesContainer.appendChild(flightsDiv);
       } else {
-        console.log('❌ No products to display:', products);
+        console.log('❌ No flights to display:', flights);
       }
 
       // Scroll to bottom
       scrollToBottom();
     }
 
-    function createProductsGrid(products) {
-      console.log('🎨 Creating grid for products:', products);
+    function createFlightsGrid(flights) {
+      console.log('🎨 Creating grid for flights:', flights);
       const container = document.createElement('div');
       container.style.marginLeft = '56px'; // Align with messages
       container.style.marginBottom = '1.5rem';
@@ -745,8 +745,8 @@
       const grid = document.createElement('div');
       grid.className = 'products-grid';
 
-      products.forEach(product => {
-        const card = createProductCard(product);
+      flights.forEach(flight => {
+        const card = createFlightCard(flight);
         grid.appendChild(card);
       });
 
@@ -754,88 +754,88 @@
       return container;
     }
 
-    function createProductCard(product) {
+    function createFlightCard(flight) {
       const card = document.createElement('div');
       card.className = 'product-card';
-      card.onclick = () => window.open(product.link, '_blank');
+      card.onclick = () => window.open(flight.bookingLink, '_blank');
 
-      // Image container with wishlist button
-      const imageContainer = document.createElement('div');
-      imageContainer.className = 'product-image-container';
+      // Flight header with airline
+      const header = document.createElement('div');
+      header.style.padding = '1rem';
+      header.style.borderBottom = '1px solid var(--border-color)';
+      header.style.fontWeight = '600';
+      header.innerHTML = `✈️ ${flight.airline} ${flight.flightNumber}`;
 
-      const wishlistBtn = document.createElement('button');
-      wishlistBtn.className = 'wishlist-btn';
-      wishlistBtn.innerHTML = `<svg class="wishlist-icon" viewBox="0 0 24 24">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-      </svg>`;
-      wishlistBtn.onclick = (e) => {
-        e.stopPropagation();
-        // Wishlist functionality can be added here
-      };
-
-      const img = document.createElement('img');
-      img.className = 'product-image';
-      img.src = product.imageLink || 'https://via.placeholder.com/400x400?text=No+Image';
-      img.alt = product.title;
-      img.loading = 'lazy';
-
-      imageContainer.appendChild(img);
-      imageContainer.appendChild(wishlistBtn);
-
+      // Flight route and timing
       const info = document.createElement('div');
       info.className = 'product-info';
 
-      const title = document.createElement('div');
-      title.className = 'product-title';
-      title.textContent = product.title;
+      const route = document.createElement('div');
+      route.style.display = 'flex';
+      route.style.justifyContent = 'space-between';
+      route.style.alignItems = 'center';
+      route.style.marginBottom = '0.75rem';
+      
+      const departure = document.createElement('div');
+      departure.innerHTML = `
+        <div style="font-size: 1.5rem; font-weight: 700;">${flight.departure.time.substring(0, 5)}</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">${flight.departure.city}</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary);">${flight.departure.airport}</div>
+      `;
+      
+      const divider = document.createElement('div');
+      divider.style.flex = '1';
+      divider.style.textAlign = 'center';
+      divider.style.color = 'var(--text-secondary)';
+      divider.innerHTML = `
+        <div style="font-size: 0.75rem;">${flight.duration}</div>
+        <div style="margin: 0.25rem 0;">→</div>
+        <div style="font-size: 0.75rem;">${flight.stops === 0 ? 'Direkt' : flight.stops + ' Aktarma'}</div>
+      `;
+      
+      const arrival = document.createElement('div');
+      arrival.style.textAlign = 'right';
+      arrival.innerHTML = `
+        <div style="font-size: 1.5rem; font-weight: 700;">${flight.arrival.time.substring(0, 5)}</div>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">${flight.arrival.city}</div>
+        <div style="font-size: 0.75rem; color: var(--text-secondary);">${flight.arrival.airport}</div>
+      `;
 
-      const description = document.createElement('div');
-      description.className = 'product-description';
-      // Extract description from title or use a generic one
-      const titleParts = product.title.split(' - ');
-      description.textContent = titleParts[1] || product.gender || '';
+      route.appendChild(departure);
+      route.appendChild(divider);
+      route.appendChild(arrival);
 
+      // Price info
       const priceContainer = document.createElement('div');
       priceContainer.className = 'product-price';
+      priceContainer.style.marginTop = '1rem';
+      priceContainer.style.paddingTop = '1rem';
+      priceContainer.style.borderTop = '1px solid var(--border-color)';
 
       const priceRow = document.createElement('div');
       priceRow.className = 'price-row';
+      priceRow.style.display = 'flex';
+      priceRow.style.justifyContent = 'space-between';
+      priceRow.style.alignItems = 'center';
 
       const currentPrice = document.createElement('div');
       currentPrice.className = 'current-price';
-      currentPrice.textContent = formatPrice(product.salePrice || product.price);
+      currentPrice.textContent = `${flight.price} ${flight.currency}`;
+
+      const cabinClass = document.createElement('div');
+      cabinClass.style.fontSize = '0.85rem';
+      cabinClass.style.color = 'var(--text-secondary)';
+      cabinClass.textContent = flight.cabinClass === 'economy' ? 'Ekonomi' : 
+                               flight.cabinClass === 'business' ? 'Business' : 'First Class';
 
       priceRow.appendChild(currentPrice);
-
-      // Show original price and discount if on sale
-      if (product.salePrice && product.price !== product.salePrice) {
-        const originalPrice = document.createElement('div');
-        originalPrice.className = 'original-price';
-        originalPrice.textContent = formatPrice(product.price);
-        priceRow.appendChild(originalPrice);
-
-        const discount = calculateDiscount(product.price, product.salePrice);
-        if (discount > 0) {
-          const badge = document.createElement('div');
-          badge.className = 'discount-badge';
-          badge.textContent = `%${discount} İndirim`;
-          priceRow.appendChild(badge);
-        }
-      }
-
+      priceRow.appendChild(cabinClass);
       priceContainer.appendChild(priceRow);
 
-      // Add color information if available
-      const colors = document.createElement('div');
-      colors.className = 'product-colors';
-      colors.textContent = '3 Renk'; // This can be dynamic if color data is available
-
-      info.appendChild(title);
-      info.appendChild(description);
+      info.appendChild(route);
       info.appendChild(priceContainer);
-      info.appendChild(colors);
 
-      card.appendChild(imageContainer);
+      card.appendChild(header);
       card.appendChild(info);
 
       return card;

@@ -1,44 +1,31 @@
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
-import { GoogleFeed, Product } from '../../../shared/types';
+import { FlightFeed, Flight } from '../../../shared/types';
 import { CacheService } from './cacheService';
 
 export class FeedParserService {
   constructor(private cacheService: CacheService) {}
 
-  async parseFeed(siteId: string, siteName: string, feedUrl: string): Promise<GoogleFeed> {
+  async parseFeed(siteId: string, siteName: string, feedUrl: string): Promise<FlightFeed> {
     try {
-      console.log(`📡 Fetching feed for ${siteName} from ${feedUrl}`);
+      console.log(`📡 Fetching flight feed for ${siteName} from ${feedUrl}`);
       
-      // Fetch XML feed
-      const response = await axios.get(feedUrl, {
-        timeout: 30000,
-        headers: {
-          'User-Agent': 'ShopAsistAI/1.0',
-        },
-      });
-
-      // Parse XML
-      const parsed = await parseStringPromise(response.data, {
-        explicitArray: false,
-        mergeAttrs: true,
-      });
-
-      // Extract products
-      const products = this.extractProducts(parsed);
+      // TODO: Implement real flight data feed parsing
+      // For now, generate mock flight data
+      const flights = this.generateMockFlights(siteId);
       
-      const feed: GoogleFeed = {
+      const feed: FlightFeed = {
         siteId,
         siteName,
         feedUrl,
         lastUpdated: new Date(),
-        products,
+        flights,
       };
 
       // Cache the feed
       this.cacheService.setFeed(feed);
       
-      console.log(`✅ Parsed ${products.length} products for ${siteName}`);
+      console.log(`✅ Parsed ${flights.length} flights for ${siteName}`);
       return feed;
     } catch (error) {
       console.error(`❌ Error parsing feed for ${siteName}:`, error);
@@ -46,97 +33,74 @@ export class FeedParserService {
     }
   }
 
-  private extractProducts(parsed: any): Product[] {
-    try {
-      // Google Shopping Feed uses RSS 2.0 or Atom format
-      let items: any[] = [];
+  private generateMockFlights(siteId: string): Flight[] {
+    // Generate mock flight data for testing
+    const routes = [
+      { from: 'Istanbul', to: 'Antalya', fromCode: 'IST', toCode: 'AYT', country: 'Turkey' },
+      { from: 'Istanbul', to: 'Izmir', fromCode: 'IST', toCode: 'ADB', country: 'Turkey' },
+      { from: 'Ankara', to: 'Antalya', fromCode: 'ESB', toCode: 'AYT', country: 'Turkey' },
+      { from: 'Istanbul', to: 'London', fromCode: 'IST', toCode: 'LHR', country: 'UK' },
+      { from: 'Istanbul', to: 'Berlin', fromCode: 'IST', toCode: 'TXL', country: 'Germany' },
+      { from: 'Antalya', to: 'Frankfurt', fromCode: 'AYT', toCode: 'FRA', country: 'Germany' },
+    ];
 
-      // Try RSS 2.0 format
-      if (parsed.rss?.channel?.item) {
-        items = Array.isArray(parsed.rss.channel.item)
-          ? parsed.rss.channel.item
-          : [parsed.rss.channel.item];
-      }
-      // Try Atom format
-      else if (parsed.feed?.entry) {
-        items = Array.isArray(parsed.feed.entry)
-          ? parsed.feed.entry
-          : [parsed.feed.entry];
-      }
+    const flights: Flight[] = [];
+    let flightId = 1;
 
-      const allProducts = items.map((item) => this.parseProduct(item)).filter(p => p !== null);
-      
-      // Log before stock filtering
-      const size28Products = allProducts.filter(p => p?.size === '28');
-      console.log(`[FeedParser] Found ${size28Products.length} products with size 28 (before stock filter)`);
-      if (size28Products.length > 0) {
-        console.log(`[FeedParser] Size 28 samples:`, size28Products.slice(0, 3).map(p => ({
-          id: p.id, 
-          title: p.title.substring(0, 50), 
-          size: p.size, 
-          availability: p.availability,
-          gender: p.gender
-        })));
+    routes.forEach(route => {
+      // Generate 3 flights per route
+      for (let i = 0; i < 3; i++) {
+        const basePrice = 500 + Math.random() * 1500;
+        const isDirect = Math.random() > 0.3;
+        
+        flights.push({
+          id: `${siteId}-flight-${flightId++}`,
+          flightNumber: `XQ${1000 + flightId}`,
+          airline: 'SunExpress',
+          departure: {
+            airport: route.fromCode,
+            city: route.from,
+            country: route.from.includes('Istanbul') || route.from.includes('Ankara') ? 'Turkey' : route.country,
+            date: this.getRandomDate(),
+            time: this.getRandomTime(),
+          },
+          arrival: {
+            airport: route.toCode,
+            city: route.to,
+            country: route.country,
+            date: this.getRandomDate(),
+            time: this.getRandomTime(),
+          },
+          duration: isDirect ? '2h 30m' : '4h 15m',
+          price: basePrice.toFixed(2),
+          currency: 'EUR',
+          availability: Math.random() > 0.1 ? 'available' : 'limited',
+          stops: isDirect ? 0 : 1,
+          stopCities: !isDirect ? ['Vienna'] : undefined,
+          cabinClass: i === 0 ? 'economy' : i === 1 ? 'business' : 'economy',
+          bookingLink: `https://sunexpress.com/book/${route.fromCode}-${route.toCode}`,
+          fareType: i === 0 ? 'promo' : i === 1 ? 'flex' : 'standard',
+          baggageAllowance: '20kg',
+          amenities: ['WiFi', 'Meal'],
+        });
       }
-      
-      const inStockProducts = allProducts
-        .filter((p) => {
-          if (!p) return false;
-          // Only include products that are in stock
-          const availability = p.availability?.toLowerCase() || '';
-          return availability.includes('in stock') || availability.includes('stokta');
-        }) as Product[];
-      
-      // Log after stock filtering for size 28
-      const size28InStock = inStockProducts.filter(p => p.size === '28');
-      console.log(`[FeedParser] Size 28 products AFTER stock filter: ${size28InStock.length}`);
-      if (size28InStock.length > 0) {
-        console.log(`[FeedParser] Size 28 IN STOCK samples:`, size28InStock.slice(0, 5).map(p => ({
-          id: p.id,
-          title: p.title.substring(0, 40),
-          gender: p.gender,
-          productType: p.productType?.substring(0, 30)
-        })));
-      }
-      
-      return inStockProducts;
-    } catch (error) {
-      console.error('Error extracting products:', error);
-      return [];
-    }
+    });
+
+    return flights;
   }
 
-  private parseProduct(item: any): Product | null {
-    try {
-      // Handle both RSS and Atom formats with Google Shopping namespace (g:)
-      const getValue = (key: string, gKey?: string): string => {
-        const gValue = gKey ? item[`g:${gKey}`] : item[`g:${key}`];
-        return gValue || item[key] || '';
-      };
+  private getRandomDate(): string {
+    const days = Math.floor(Math.random() * 30) + 1;
+    const date = new Date();
+    date.setDate(date.getDate() + days);
+    return date.toISOString().split('T')[0];
+  }
 
-      const id = getValue('id') || getValue('guid') || '';
-      if (!id) return null;
-
-      const productType = getValue('product_type');
-      let gender = getValue('gender');
-      
-      // If gender is not provided, extract from productType
-      if (!gender && productType) {
-        const normalizedType = productType.toLowerCase();
-        if (normalizedType.includes('kız') || normalizedType.includes('kiz')) {
-          gender = 'Kız';
-        } else if (normalizedType.includes('erkek çocuk')) {
-          gender = 'Erkek Çocuk';
-        } else if (normalizedType.includes('kadın') || normalizedType.includes('kadin')) {
-          gender = 'Kadın';
-        } else if (normalizedType.includes('erkek')) {
-          gender = 'Erkek';
-        }
-      }
-      
-      const product: Product = {
-        id,
-        title: getValue('title'),
+  private getRandomTime(): string {
+    const hours = Math.floor(Math.random() * 24);
+    const minutes = Math.floor(Math.random() * 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
         description: getValue('description'),
         link: getValue('link'),
         imageLink: getValue('image_link', 'image_link') || getValue('image'),
