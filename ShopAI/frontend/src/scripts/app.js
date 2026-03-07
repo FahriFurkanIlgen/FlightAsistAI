@@ -273,6 +273,14 @@ class ChatWidget {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
     
+    // Add avatar for assistant messages
+    if (role === 'assistant') {
+      const avatar = document.createElement('div');
+      avatar.className = 'message-avatar';
+      avatar.innerHTML = '<img src="images/sunexpress-icon.svg" alt="SunExpress AI" />';
+      messageDiv.appendChild(avatar);
+    }
+    
     const p = document.createElement('p');
     
     // Add to history immediately

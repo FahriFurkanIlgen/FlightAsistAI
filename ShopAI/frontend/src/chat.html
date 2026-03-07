@@ -61,12 +61,14 @@
     }
 
     .logo {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--primary-color);
       display: flex;
       align-items: center;
       gap: 0.5rem;
+    }
+
+    .logo img {
+      height: 40px;
+      width: auto;
     }
 
     .logo-icon {
@@ -183,6 +185,13 @@
       justify-content: center;
       font-size: 1.2rem;
       flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
 
     .avatar.user-avatar {
@@ -191,8 +200,8 @@
     }
 
     .avatar.ai-avatar {
-      background: #f0f0f0;
-      color: var(--text-primary);
+      background: white;
+      padding: 5px;
     }
 
     .message-content {
@@ -549,9 +558,7 @@
     <div class="header">
       <div class="header-left">
         <div class="logo">
-          <div>
-            <div style="display: flex;align-items: center;">✈️ SunExpress AI</div>
-          </div>
+          <img src="images/sunexpress-logo.svg" alt="SunExpress Airlines" />
         </div>
       </div>
     </div>
@@ -702,7 +709,15 @@
 
       const avatar = document.createElement('div');
       avatar.className = `avatar ${type}-avatar`;
-      avatar.textContent = type === 'user' ? '👤' : '✈️';
+      
+      if (type === 'user') {
+        avatar.textContent = '👤';
+      } else {
+        const img = document.createElement('img');
+        img.src = 'images/sunexpress-icon.svg';
+        img.alt = 'SunExpress AI';
+        avatar.appendChild(img);
+      }
 
       const contentDiv = document.createElement('div');
       contentDiv.className = 'message-content';
