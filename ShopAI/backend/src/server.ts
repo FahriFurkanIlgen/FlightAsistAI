@@ -7,6 +7,7 @@ import flightsRouter from './routes/flights';
 import configRouter from './routes/config';
 import searchRouter from './routes/search';
 import tenantsRouter from './routes/tenants';
+import graphRouter from './routes/graph';
 import { FeedParserService } from './services/feedParser';
 import { CacheService } from './services/cacheService';
 import { graphService } from './services/graphService';
@@ -65,6 +66,7 @@ app.use('/api/flights', flightsRouter);
 app.use('/api/config', configRouter);
 app.use('/api/search', searchRouter);
 app.use('/api/tenants', tenantsRouter);
+app.use('/api/graph', graphRouter);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
@@ -112,8 +114,8 @@ const syncFlightsToGraph = async () => {
       return;
     }
 
-    // Import flights to graph (will be implemented in graphService later)
-    // await graphService.importFlights(flights);
+    // Import flights to graph
+    await graphService.importFlights(flights);
     
     console.log(`✅ GraphDB sync complete: ${flights.length} flights`);
   } catch (error) {
