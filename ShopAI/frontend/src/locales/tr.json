@@ -1,0 +1,59 @@
+{
+  "welcome": {
+    "title": "Merhaba!",
+    "subtitle": "Uçuş aramanıza yardımcı olabilirim. Nereye gitmek istersiniz?",
+    "headerTitle": "Uçuş Asistanı"
+  },
+  "quickActions": {
+    "domesticFlights": {
+      "title": "İstanbul - Antalya",
+      "description": "Popüler iç hat uçuşları"
+    },
+    "internationalFlights": {
+      "title": "Uluslararası Uçuşlar",
+      "description": "Avrupa ve dış hatlar"
+    },
+    "directFlights": {
+      "title": "Direkt Uçuşlar",
+      "description": "Aktarmasız seyahat"
+    },
+    "cheapestFlights": {
+      "title": "En Uygun Fiyatlar",
+      "description": "Bütçe dostu uçuşlar"
+    }
+  },
+  "quickMessages": {
+    "domesticSearch": "İstanbul Antalya uçuşu arıyorum",
+    "internationalSearch": "Yurt dışı uçuşları göster",
+    "directSearch": "Direct uçuşlar",
+    "cheapSearch": "En ucuz uçuşlar"
+  },
+  "input": {
+    "placeholder": "Mesajınızı yazın...",
+    "send": "Gönder"
+  },
+  "flight": {
+    "stops": "aktarma",
+    "direct": "Direkt",
+    "duration": "Süre",
+    "bookNow": "Şimdi Rezerve Et",
+    "cabinClass": {
+      "economy": "Ekonomi",
+      "business": "Business",
+      "first": "First Class"
+    }
+  },
+  "loading": {
+    "searching": "Uçuşlar aranıyor...",
+    "thinking": "Düşünüyorum..."
+  },
+  "errors": {
+    "networkError": "Bağlantı hatası. Lütfen tekrar deneyin.",
+    "serverError": "Sunucu hatası. Lütfen daha sonra tekrar deneyin.",
+    "noFlightsFound": "Üzgünüm, bu kriterlere uygun uçuş bulunamadı."
+  },
+  "chat": {
+    "typingIndicator": "Yazıyor...",
+    "retry": "Tekrar Dene"
+  }
+}

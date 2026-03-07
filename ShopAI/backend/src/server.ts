@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cron from 'node-cron';
+import path from 'path';
 import chatRouter from './routes/chat';
 import flightsRouter from './routes/flights';
 import configRouter from './routes/config';
@@ -59,6 +60,11 @@ app.use((req: Request, _res: Response, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
+
+// Serve static files from frontend
+const frontendPath = path.join(__dirname, '../../frontend/src');
+app.use(express.static(frontendPath));
+console.log(`📁 Serving static files from: ${frontendPath}`);
 
 // Routes
 app.use('/api/chat', chatRouter);

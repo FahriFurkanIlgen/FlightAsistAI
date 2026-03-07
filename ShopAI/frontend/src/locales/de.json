@@ -1,0 +1,59 @@
+{
+  "welcome": {
+    "title": "Hallo!",
+    "subtitle": "Ich kann Ihnen bei der Flugsuche helfen. Wohin möchten Sie reisen?",
+    "headerTitle": "Flugassistent"
+  },
+  "quickActions": {
+    "domesticFlights": {
+      "title": "Istanbul - Antalya",
+      "description": "Beliebte Inlandsflüge"
+    },
+    "internationalFlights": {
+      "title": "Internationale Flüge",
+      "description": "Europa und darüber hinaus"
+    },
+    "directFlights": {
+      "title": "Direktflüge",
+      "description": "Nonstop-Reisen"
+    },
+    "cheapestFlights": {
+      "title": "Beste Preise",
+      "description": "Günstige Flüge"
+    }
+  },
+  "quickMessages": {
+    "domesticSearch": "Ich suche Flüge von Istanbul nach Antalya",
+    "internationalSearch": "Internationale Flüge anzeigen",
+    "directSearch": "Direktflüge",
+    "cheapSearch": "Günstigste Flüge"
+  },
+  "input": {
+    "placeholder": "Ihre Nachricht eingeben...",
+    "send": "Senden"
+  },
+  "flight": {
+    "stops": "Zwischenstopp(s)",
+    "direct": "Direkt",
+    "duration": "Dauer",
+    "bookNow": "Jetzt Buchen",
+    "cabinClass": {
+      "economy": "Economy",
+      "business": "Business",
+      "first": "First Class"
+    }
+  },
+  "loading": {
+    "searching": "Flüge werden gesucht...",
+    "thinking": "Ich denke nach..."
+  },
+  "errors": {
+    "networkError": "Verbindungsfehler. Bitte versuchen Sie es erneut.",
+    "serverError": "Serverfehler. Bitte versuchen Sie es später erneut.",
+    "noFlightsFound": "Entschuldigung, keine Flüge gefunden, die Ihren Kriterien entsprechen."
+  },
+  "chat": {
+    "typingIndicator": "Schreibt...",
+    "retry": "Erneut Versuchen"
+  }
+}

@@ -21,7 +21,7 @@ export class AIService {
 
   async chat(request: ChatRequest): Promise<ChatResponse> {
     try {
-      const { siteId, message, conversationHistory = [] } = request;
+      const { siteId, message, conversationHistory = [], language = 'tr' } = request;
 
       // Check for irrelevant queries
       const irrelevantResponse = this.checkIrrelevantQuery(message, siteId, conversationHistory);
@@ -58,7 +58,7 @@ export class AIService {
       console.log(`[AIService] Found ${relevantFlights.length} relevant flights`);
 
       // Build messages for OpenAI
-      const messages = this.buildMessages(message, conversationHistory, relevantFlights, siteId);
+      const messages = this.buildMessages(message, conversationHistory, relevantFlights, siteId, language);
 
       // Call OpenAI
       const completion = await this.openai.chat.completions.create({
@@ -152,9 +152,12 @@ export class AIService {
     userMessage: string,
     history: ChatMessage[],
     flights: Flight[],
-    _siteId: string
+    _siteId: string,
+    language: string = 'tr'
   ): any[] {
-    const systemPrompt = `Sen SunExpress havayolu şirketinin AI uçuş asistanısın. 
+    // Dynamic system prompts based on language
+    const systemPrompts: Record<string, string> = {
+      tr: `Sen SunExpress havayolu şirketinin AI uçuş asistanısın. 
 Kullanıcıların uçuş bulmasına yardımcı olursun. 
 
 Görevin:
@@ -169,7 +172,44 @@ Görevin:
 - Uçuş rezervasyonu YAPMA, sadece bilgi ver
 - Türkçe dilinde profesyonel ve samimi bir dille cevap ver
 - Kısa ve net cevaplar ver (max 3-4 cümle)
-- Eğer uygun uçuş yoksa, alternatif destinasyonlar öner`;
+- Eğer uygun uçuş yoksa, alternatif destinasyonlar öner`,
+      
+      en: `You are SunExpress airline's AI flight assistant.
+You help users find flights.
+
+Your tasks:
+- Provide friendly and professional flight recommendations
+- Share detailed flight information (departure/arrival times, duration, price, connection info)
+- Explain direct and connecting flight options
+- Share cabin class information (economy, business, first)
+- Help with price comparisons
+
+Important rules:
+- ONLY use the flight information provided to you, don't make up flights
+- DO NOT make reservations, only provide information
+- Respond in English with a professional and friendly tone
+- Keep responses short and clear (max 3-4 sentences)
+- If no suitable flights exist, suggest alternative destinations`,
+      
+      de: `Du bist der KI-Flugassistent von SunExpress.
+Du hilfst Benutzern beim Finden von Flügen.
+
+Deine Aufgaben:
+- Freundliche und professionelle Flugempfehlungen geben
+- Detaillierte Fluginformationen teilen (Abflug-/Ankunftszeiten, Dauer, Preis, Verbindungsinfo)
+- Direkt- und Verbindungsflugoptionen erklären
+- Kabinenklasseninformationen teilen (Economy, Business, First)
+- Bei Preisvergleichen helfen
+
+Wichtige Regeln:
+- Verwende NUR die bereitgestellten Fluginformationen, erfinde keine Flüge
+- Mache KEINE Reservierungen, gib nur Informationen
+- Antworte auf Deutsch in einem professionellen und freundlichen Ton
+- Halte Antworten kurz und klar (max 3-4 Sätze)
+- Wenn keine passenden Flüge existieren, schlage alternative Ziele vor`
+    };
+
+    const systemPrompt = systemPrompts[language] || systemPrompts['tr'];
 
     const messages: any[] = [
       { role: 'system', content: systemPrompt }

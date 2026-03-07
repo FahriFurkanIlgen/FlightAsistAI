@@ -24,8 +24,55 @@ class ChatWidget {
     
     this.initElements();
     this.attachEventListeners();
+    this.initializeApp();
+  }
+
+  async initializeApp() {
+    // Initialize i18n first
+    if (window.i18n) {
+      await window.i18n.init();
+      this.updateUILanguage();
+    }
     this.loadConfig();
     this.checkAPIStatus();
+  }
+
+  updateUILanguage() {
+    if (!window.i18n) return;
+
+    // Update welcome section
+    if (this.welcomeMessage) {
+      this.welcomeMessage.textContent = window.i18n.t('welcome.title');
+    }
+    if (this.welcomeSubtext) {
+      this.welcomeSubtext.textContent = window.i18n.t('welcome.subtitle');
+    }
+    
+    // Update input placeholder
+    if (this.chatInput) {
+      this.chatInput.placeholder = window.i18n.t('input.placeholder');
+    }
+
+    // Update privacy footer
+    const privacyFooter = this.root.getElementById('privacy-footer');
+    if (privacyFooter && window.i18n.getLanguage() === 'tr') {
+      privacyFooter.innerHTML = `
+        Sohbeti başlatarak veya sürdürerek <a href="#" id="privacy-link" target="_blank">Gizlilik Politikamızı</a> kabul ettiğinizi beyan etmiş olursunuz.
+        <button class="close-privacy" id="close-privacy">&times;</button>
+      `;
+    } else if (privacyFooter && window.i18n.getLanguage() === 'en') {
+      privacyFooter.innerHTML = `
+        By starting or continuing the conversation, you agree to our <a href="#" id="privacy-link" target="_blank">Privacy Policy</a>.
+        <button class="close-privacy" id="close-privacy">&times;</button>
+      `;
+    } else if (privacyFooter && window.i18n.getLanguage() === 'de') {
+      privacyFooter.innerHTML = `
+        Durch das Starten oder Fortsetzen des Gesprächs stimmen Sie unserer <a href="#" id="privacy-link" target="_blank">Datenschutzrichtlinie</a> zu.
+        <button class="close-privacy" id="close-privacy">&times;</button>
+      `;
+    }
+
+    console.log('[Widget] UI language updated to:', window.i18n.getLanguage());
   }
 
   initElements() {
@@ -539,7 +586,8 @@ class ChatWidget {
     } catch (error) {
       console.error('Chat Error:', error);
       this.removeLoading();
-      this.addMessage('assistant', 'Üzgünüm, bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+      const errorMessage = window.i18n ? window.i18n.t('errors.serverError') : 'Üzgünüm, bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
+      this.addMessage('assistant', errorMessage);
     } finally {
       this.isLoading = false;
       this.chatSend.disabled = false;

@@ -612,11 +612,62 @@
     </div>
   </div>
 
+  <!-- i18n Script -->
+  <script src="scripts/i18n.js"></script>
   <script>
     const API_BASE_URL = 'http://localhost:3000';
     const SITE_ID = 'sunexpress';
     let conversationHistory = [];
     let isProcessing = false;
+
+    // Initialize i18n and update UI
+    async function initializeApp() {
+      await i18n.init();
+      updateUILanguage();
+    }
+
+    // Update all UI text with translations
+    function updateUILanguage() {
+      // Welcome section
+      const welcomeTitle = document.querySelector('.welcome-message h1');
+      const welcomeSubtitle = document.querySelector('.welcome-message p');
+      if (welcomeTitle) welcomeTitle.textContent = '👋 ' + i18n.t('welcome.title');
+      if (welcomeSubtitle) welcomeSubtitle.textContent = i18n.t('welcome.subtitle');
+
+      // Quick actions
+      const quickActions = document.querySelectorAll('.quick-action');
+      if (quickActions[0]) {
+        quickActions[0].querySelector('.quick-action-title').textContent = i18n.t('quickActions.domesticFlights.title');
+        quickActions[0].querySelector('.quick-action-desc').textContent = i18n.t('quickActions.domesticFlights.description');
+        quickActions[0].setAttribute('onclick', `sendQuickMessage('${i18n.t('quickMessages.domesticSearch')}')`);
+      }
+      if (quickActions[1]) {
+        quickActions[1].querySelector('.quick-action-title').textContent = i18n.t('quickActions.internationalFlights.title');
+        quickActions[1].querySelector('.quick-action-desc').textContent = i18n.t('quickActions.internationalFlights.description');
+        quickActions[1].setAttribute('onclick', `sendQuickMessage('${i18n.t('quickMessages.internationalSearch')}')`);
+      }
+      if (quickActions[2]) {
+        quickActions[2].querySelector('.quick-action-title').textContent = i18n.t('quickActions.directFlights.title');
+        quickActions[2].querySelector('.quick-action-desc').textContent = i18n.t('quickActions.directFlights.description');
+        quickActions[2].setAttribute('onclick', `sendQuickMessage('${i18n.t('quickMessages.directSearch')}')`);
+      }
+      if (quickActions[3]) {
+        quickActions[3].querySelector('.quick-action-title').textContent = i18n.t('quickActions.cheapestFlights.title');
+        quickActions[3].querySelector('.quick-action-desc').textContent = i18n.t('quickActions.cheapestFlights.description');
+        quickActions[3].setAttribute('onclick', `sendQuickMessage('${i18n.t('quickMessages.cheapSearch')}')`);
+      }
+
+      // Input placeholder
+      const textarea = document.getElementById('userInput');
+      if (textarea) textarea.placeholder = i18n.t('input.placeholder');
+
+      console.log('[App] UI language updated to:', i18n.getLanguage());
+    }
+
+    // Listen for language changes
+    window.addEventListener('languageChanged', () => {
+      updateUILanguage();
+    });
 
     // Auto-resize textarea
     const textarea = document.getElementById('userInput');
@@ -671,7 +722,8 @@
           body: JSON.stringify({
             siteId: SITE_ID,
             message: message,
-            conversationHistory: conversationHistory
+            conversationHistory: conversationHistory,
+            language: i18n.getLanguage() // Add language parameter
           })
         });
 
@@ -694,7 +746,7 @@
       } catch (error) {
         console.error('Error:', error);
         removeTypingIndicator(typingId);
-        addMessage('ai', 'Üzgünüm, bir hata oluştu. Lütfen tekrar deneyin.');
+        addMessage('ai', i18n.t('errors.networkError'));
       } finally {
         isProcessing = false;
         document.getElementById('sendButton').disabled = false;
@@ -805,7 +857,7 @@
       divider.innerHTML = `
         <div style="font-size: 0.75rem;">${flight.duration}</div>
         <div style="margin: 0.25rem 0;">→</div>
-        <div style="font-size: 0.75rem;">${flight.stops === 0 ? 'Direkt' : flight.stops + ' Aktarma'}</div>
+        <div style="font-size: 0.75rem;">${flight.stops === 0 ? i18n.t('flight.direct') : flight.stops + ' ' + i18n.t('flight.stops')}</div>
       `;
       
       const arrival = document.createElement('div');
@@ -840,8 +892,8 @@
       const cabinClass = document.createElement('div');
       cabinClass.style.fontSize = '0.85rem';
       cabinClass.style.color = 'var(--text-secondary)';
-      cabinClass.textContent = flight.cabinClass === 'economy' ? 'Ekonomi' : 
-                               flight.cabinClass === 'business' ? 'Business' : 'First Class';
+      cabinClass.textContent = flight.cabinClass === 'economy' ? i18n.t('flight.cabinClass.economy') : 
+                               flight.cabinClass === 'business' ? i18n.t('flight.cabinClass.business') : i18n.t('flight.cabinClass.first');
 
       priceRow.appendChild(currentPrice);
       priceRow.appendChild(cabinClass);
@@ -909,8 +961,9 @@
       }, 100);
     }
 
-    // Focus input on load
-    window.addEventListener('load', () => {
+    // Focus input on load and initialize app
+    window.addEventListener('load', async () => {
+      await initializeApp();
       document.getElementById('userInput').focus();
     });
   </script>

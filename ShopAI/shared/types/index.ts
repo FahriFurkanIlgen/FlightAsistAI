@@ -52,6 +52,7 @@ export interface ChatRequest {
   siteId: string;
   message: string;
   conversationHistory?: ChatMessage[];
+  language?: string; // ISO 639-1 language code (en, tr, de)
 }
 
 export interface ChatResponse {
