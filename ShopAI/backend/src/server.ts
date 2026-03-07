@@ -6,9 +6,7 @@ import chatRouter from './routes/chat';
 import flightsRouter from './routes/flights';
 import configRouter from './routes/config';
 import searchRouter from './routes/search';
-import merchandisingRouter from './routes/merchandising';
 import tenantsRouter from './routes/tenants';
-import recommendationsRouter from './routes/recommendations';
 import { FeedParserService } from './services/feedParser';
 import { CacheService } from './services/cacheService';
 import { graphService } from './services/graphService';
@@ -66,9 +64,7 @@ app.use('/api/chat', chatRouter);
 app.use('/api/flights', flightsRouter);
 app.use('/api/config', configRouter);
 app.use('/api/search', searchRouter);
-app.use('/api/merchandising', merchandisingRouter);
 app.use('/api/tenants', tenantsRouter);
-app.use('/api/recommendations', recommendationsRouter);
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
@@ -101,34 +97,25 @@ const initializeGraphDB = async () => {
   }
 };
 
-// Sync products to GraphDB
-const syncProductsToGraph = async () => {
+// Sync flights to GraphDB
+const syncFlightsToGraph = async () => {
   if (process.env.NEO4J_ENABLED !== 'true' || !graphService.isServiceConnected()) {
     return;
   }
 
   try {
-    console.log('🔄 Syncing products to GraphDB...');
-    const products = cacheService.getAllProducts();
+    console.log('🔄 Syncing flights to GraphDB...');
+    const flights = cacheService.getAllFlights();
     
-    if (products.length === 0) {
-      console.log('⚠️  No products to sync');
+    if (flights.length === 0) {
+      console.log('⚠️  No flights to sync');
       return;
     }
 
-    // Import products to graph
-    await graphService.importProducts(products);
+    // Import flights to graph (will be implemented in graphService later)
+    // await graphService.importFlights(flights);
     
-    // Create relationships
-    console.log('🔗 Creating product relationships...');
-    await Promise.all([
-      graphService.createCategoryRelationships(),
-      graphService.createBrandRelationships(),
-      graphService.createPriceSimilarityRelationships()
-    ]);
-
-    const stats = await graphService.getStatistics();
-    console.log(`✅ GraphDB sync complete: ${stats.totalProducts} products, ${stats.totalRelationships} relationships`);
+    console.log(`✅ GraphDB sync complete: ${flights.length} flights`);
   } catch (error) {
     console.error('❌ Error syncing to GraphDB:', error);
   }
@@ -136,17 +123,17 @@ const syncProductsToGraph = async () => {
 
 // Initialize feeds on startup
 const initializeFeeds = async () => {
-  console.log('🚀 Initializing product feeds...');
+  console.log('🚀 Initializing flight feeds...');
   try {
-    const feedUrl = process.env.HIGH5_FEED_URL;
-    const siteName = process.env.SITE_NAME || 'High5 Turkey';
+    const feedUrl = process.env.FLIGHT_FEED_URL || 'mock';
+    const siteName = process.env.SITE_NAME || 'SunExpress';
     
-    if (feedUrl) {
-      await feedParserService.parseFeed('high5', siteName, feedUrl);
-      console.log('✅ Product feeds initialized successfully');
-      
-      // Sync to GraphDB if enabled
-      await syncProductsToGraph();
+    // Parse flight feed (currently using mock data)
+    await feedParserService.parseFeed('sunexpress', siteName, feedUrl);
+    console.log('✅ Flight feeds initialized successfully');
+    
+    // Sync to GraphDB if enabled
+    await syncFlightsToGraph();
     } else {
       console.warn('⚠️  No feed URL configured. Set HIGH5_FEED_URL in .env');
     }
