@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ShopAsistAI Widget</title>
+  <title>FlightAsistAI Widget</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles/main.css">
 </head>
 <body>
-  <!-- ShopAsistAI Chat Widget - Standalone Embeddable Widget -->
+  <!-- FlightAsistAI Chat Widget - Standalone Embeddable Widget -->
   <div id="chat-widget" class="chat-widget">
     <div id="chat-toggle" class="chat-toggle">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -22,15 +22,15 @@
       <div class="chat-header">
         <div class="chat-header-content">
           <img id="chat-logo" class="chat-header-logo" src="" alt="" style="display: none;">
-          <h3 id="chat-title">Alışveriş Asistanı</h3>
+          <h3 id="chat-title">Uçuş Asistanı</h3>
         </div>
         <button id="chat-close" class="chat-close">&times;</button>
       </div>
 
       <div class="chat-content">
         <div id="welcome-section" class="welcome-section">
-          <h2 id="welcome-message">Merhaba, aradığınızı hızlıca bulalım!</h2>
-          <p id="welcome-subtext">Yeni sezon, kombinasyon önerileri ve sipariş desteği.</p>
+          <h2 id="welcome-message">Merhaba, hayalinizdeki uçuşu bulalım!</h2>
+          <p id="welcome-subtext">Ekonomik uçuşlar, aktarmalı rotalar ve özel teklifler.</p>
         </div>
 
         <div id="category-section" class="category-section">
@@ -62,16 +62,16 @@
       </div>
 
       <div id="branding-footer" class="branding-footer">
-        <span id="branding-text">Powered by ShopAsistAI</span>
+        <span id="branding-text">Powered by FlightAsistAI</span>
       </div>
     </div>
   </div>
 
   <!-- Widget Initialization Script -->
   <script>
-    // Default configuration - will be overridden by parent page's ShopAsistConfig
+    // Default configuration - will be overridden by parent page's FlightAsistConfig
     window.ShopAsistConfig = window.ShopAsistConfig || {
-      siteId: 'high5',
+      siteId: 'sunexpress',
       apiUrl: 'http://localhost:3000'
     };
   </script>

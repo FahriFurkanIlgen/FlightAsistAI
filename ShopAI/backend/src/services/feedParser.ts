@@ -101,35 +101,4 @@ export class FeedParserService {
     const minutes = Math.floor(Math.random() * 60);
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
   }
-        description: getValue('description'),
-        link: getValue('link'),
-        imageLink: getValue('image_link', 'image_link') || getValue('image'),
-        price: getValue('price'),
-        salePrice: getValue('sale_price'),
-        availability: getValue('availability') || 'in stock',
-        brand: getValue('brand'),
-        gtin: getValue('gtin'),
-        mpn: getValue('mpn'),
-        condition: getValue('condition') || 'new',
-        googleProductCategory: getValue('google_product_category'),
-        productType,
-        color: getValue('color'),
-        size: getValue('size'),
-        gender, // Extracted from productType if not provided
-      };
-
-      // Handle additional images
-      const additionalImages = getValue('additional_image_link');
-      if (additionalImages) {
-        product.additionalImageLinks = Array.isArray(additionalImages)
-          ? additionalImages
-          : [additionalImages];
-      }
-
-      return product;
-    } catch (error) {
-      console.error('Error parsing product:', error);
-      return null;
-    }
-  }
 }

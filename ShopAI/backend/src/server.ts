@@ -90,7 +90,7 @@ const initializeGraphDB = async () => {
     await graphService.initializeSchema();
     
     const stats = await graphService.getStatistics();
-    console.log(`📊 GraphDB Stats: ${stats.totalProducts} products, ${stats.totalRelationships} relationships`);
+    console.log(`📊 GraphDB Stats: ${stats.totalFlights} flights, ${stats.totalRelationships} relationships`);
   } catch (error) {
     console.warn('⚠️  GraphDB not available:', error instanceof Error ? error.message : error);
     console.log('   Continuing without GraphDB features...');
@@ -134,9 +134,6 @@ const initializeFeeds = async () => {
     
     // Sync to GraphDB if enabled
     await syncFlightsToGraph();
-    } else {
-      console.warn('⚠️  No feed URL configured. Set HIGH5_FEED_URL in .env');
-    }
   } catch (error) {
     console.error('❌ Error initializing feeds:', error);
   }

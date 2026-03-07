@@ -28,20 +28,19 @@ router.get('/:siteId/debug', async (req: Request, res: Response) => {
     }
 
     // Get detailed search results with scores
-    const results = await searchService.searchWithScores(q, 10);
+    const results = await searchService.search(q, 10);
 
     res.json({
       siteId,
       query: q,
       indexStats: searchService.getStats(),
       resultCount: results.length,
-      results: results.map(r => ({
-        id: r.product.id,
-        title: r.product.title,
-        brand: r.product.brand,
-        color: r.product.color,
-        size: r.product.size,
-        productType: r.product.productType,
+      results: results.map((r: any) => ({
+        id: r.flight?.id || r.id,
+        flightNumber: r.flight?.flightNumber || r.flightNumber,
+        departure: r.flight?.departure || r.departure,
+        arrival: r.flight?.arrival || r.arrival,
+        price: r.flight?.price || r.price,
         scores: {
           bm25: r.scores.bm25.toFixed(4),
           brand: r.scores.brand.toFixed(4),

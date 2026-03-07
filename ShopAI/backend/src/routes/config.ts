@@ -129,7 +129,7 @@ router.get('/parser-version/:siteId', (req: Request, res: Response) => {
     res.json({
       siteId,
       version,
-      info: searchService?.getParserVersionInfo(),
+      indexStats: searchService?.getStats(),
     });
   } catch (error: any) {
     console.error('Parser Version Get Error:', error);
@@ -168,7 +168,7 @@ router.post('/parser-version/:siteId', (req: Request, res: Response) => {
       success: true,
       siteId,
       version,
-      info: searchService?.getParserVersionInfo(),
+      indexStats: searchService?.getStats(),
     });
   } catch (error: any) {
     console.error('Parser Version Set Error:', error);

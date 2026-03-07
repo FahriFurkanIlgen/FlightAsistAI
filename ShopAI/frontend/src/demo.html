@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>High5 Türkiye - Spor Ayakkabılar</title>
+  <title>SunExpress - Uçuş Rezervasyon</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -22,8 +22,8 @@
 
     /* Demo Site Header */
     .site-header {
-      background: #022d56;
-      color: white;
+      background: #FFCC00;
+      color: #1a1a1a;
       padding: 1rem 2rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
@@ -49,7 +49,7 @@
     }
 
     .nav-menu a {
-      color: white;
+      color: #1a1a1a;
       text-decoration: none;
       font-weight: 500;
       transition: opacity 0.2s;
@@ -61,7 +61,7 @@
 
     /* Hero Section */
     .hero {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
       color: white;
       padding: 4rem 2rem;
       text-align: center;
@@ -79,8 +79,8 @@
     }
 
     .cta-button {
-      background: white;
-      color: #667eea;
+      background: #FFCC00;
+      color: #1a1a1a;
       padding: 1rem 2rem;
       border-radius: 8px;
       text-decoration: none;
@@ -93,8 +93,8 @@
       transform: translateY(-2px);
     }
 
-    /* Products Section */
-    .products-section {
+    /* Flights Section */
+    .flights-section {
       max-width: 1200px;
       margin: 4rem auto;
       padding: 0 2rem;
@@ -104,64 +104,108 @@
       font-size: 2rem;
       margin-bottom: 2rem;
       text-align: center;
-      color: #022d56;
+      color: #1e3a8a;
     }
 
-    .products-grid {
+    .flights-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
       gap: 2rem;
     }
 
-    .product-card {
+    .flight-card {
       background: white;
       border-radius: 12px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       overflow: hidden;
       transition: transform 0.2s;
+      border: 1px solid #e5e7eb;
     }
 
-    .product-card:hover {
+    .flight-card:hover {
       transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
     }
 
-    .product-image {
-      width: 100%;
-      height: 280px;
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    .flight-header {
+      background: linear-gradient(135deg, #f0f9ff 0%, #dbeafe 100%);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .flight-number {
+      font-weight: 700;
+      color: #1e3a8a;
+      font-size: 1.1rem;
+    }
+
+    .flight-duration {
+      color: #6b7280;
+      font-size: 0.9rem;
+    }
+
+    .flight-route {
+      padding: 1.5rem;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 4rem;
+      gap: 1rem;
     }
 
-    .product-info {
-      padding: 1.5rem;
+    .route-city {
+      flex: 1;
+      text-align: center;
     }
 
-    .product-name {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      color: #022d56;
+    .route-city-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e3a8a;
     }
 
-    .product-price {
-      font-size: 1.3rem;
-      color: #0ea5e9;
+    .route-time {
+      font-size: 1rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+    }
+
+    .route-date {
+      font-size: 0.85rem;
+      color: #9ca3af;
+    }
+
+    .route-arrow {
+      font-size: 1.5rem;
+      color: #3b82f6;
+    }
+
+    .flight-info {
+      padding: 0 1.5rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #e5e7eb;
+      padding-top: 1rem;
+    }
+
+    .flight-price {
+      font-size: 1.8rem;
+      color: #059669;
       font-weight: 700;
     }
 
-    .product-old-price {
-      text-decoration: line-through;
-      color: #999;
-      margin-left: 0.5rem;
-      font-size: 1rem;
+    .flight-cabin {
+      background: #f3f4f6;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      color: #4b5563;
     }
 
     /* Footer */
     .site-footer {
-      background: #022d56;
+      background: #1e3a8a;
       color: white;
       padding: 3rem 2rem;
       margin-top: 4rem;
@@ -174,8 +218,8 @@
 
     /* Info Banner */
     .info-banner {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
       padding: 1rem;
       margin: 2rem auto;
       max-width: 1200px;
@@ -183,109 +227,196 @@
     }
 
     .info-banner strong {
-      color: #92400e;
+      color: #1e3a8a;
     }
   </style>
 </head>
 <body>
-  <!-- Simulated High5 Website -->
+  <!-- Simulated SunExpress Website -->
   <header class="site-header">
     <div class="container">
-      <div class="logo">👟 HIGH5</div>
+      <div class="logo">✈️ SUNEXPRESS</div>
       <nav>
         <ul class="nav-menu">
-          <li><a href="#erkek">Erkek</a></li>
-          <li><a href="#kadin">Kadın</a></li>
-          <li><a href="#cocuk">Çocuk</a></li>
-          <li><a href="#spor">Spor</a></li>
-          <li><a href="#kampanya">Kampanyalar</a></li>
+          <li><a href="#ucuslar">Uçuşlar</a></li>
+          <li><a href="#rezervasyonlarim">Rezervasyonlarım</a></li>
+          <li><a href="#check-in">Check-in</a></li>
+          <li><a href="#kampanyalar">Kampanyalar</a></li>
+          <li><a href="#iletisim">İletişim</a></li>
         </ul>
       </nav>
     </div>
   </header>
 
   <section class="hero">
-    <h1>🎉 Yeni Sezon Koleksiyonu</h1>
-    <p>Konfor ve stilin buluştuğu yerdesiniz</p>
-    <a href="#" class="cta-button">Hemen Keşfet</a>
+    <h1>✈️ Hayalinizdeki Uçuşu Bulun</h1>
+    <p>En uygun fiyatlarla dünya sizin</p>
+    <a href="#" class="cta-button">Uçuş Ara</a>
   </section>
 
   <div class="info-banner">
-    <strong>💬 ShopAsist AI aktif!</strong> Sağ alt köşedeki chat butonuna tıklayarak alışveriş asistanımızla konuşabilir, ürün önerileri alabilirsiniz. Örnek: "42 numara erkek spor ayakkabı göster"
+    <strong>💬 Flight Asist AI aktif!</strong> Sağ alt köşedeki chat butonuna tıklayarak uçuş asistanımızla konuşabilir, uçuş önerileri alabilirsiniz. Örnek: "İstanbul'dan Antalya'ya ekonomi sınıfı uçuşlar"
   </div>
 
-  <section class="products-section">
-    <h2 class="section-title">Öne Çıkan Ürünler</h2>
-    <div class="products-grid">
-      <div class="product-card">
-        <div class="product-image">👟</div>
-        <div class="product-info">
-          <div class="product-name">Go Run Trail Altitude</div>
-          <div class="product-price">
-            2.499 TL
-            <span class="product-old-price">3.199 TL</span>
+  <section class="flights-section">
+    <h2 class="section-title">Popüler Uçuşlar</h2>
+    <div class="flights-grid">
+      <div class="flight-card">
+        <div class="flight-header">
+          <span class="flight-number">XQ123</span>
+          <span class="flight-duration">⏱️ 1s 15d</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-city">
+            <div class="route-city-name">IST</div>
+            <div class="route-time">10:30</div>
+            <div class="route-date">15 Ocak 2025</div>
+          </div>
+          <div class="route-arrow">✈️</div>
+          <div class="route-city">
+            <div class="route-city-name">AYT</div>
+            <div class="route-time">11:45</div>
+            <div class="route-date">15 Ocak 2025</div>
           </div>
         </div>
-      </div>
-      
-      <div class="product-card">
-        <div class="product-image">👟</div>
-        <div class="product-info">
-          <div class="product-name">D'Lux Walker</div>
-          <div class="product-price">2.299 TL</div>
+        <div class="flight-info">
+          <span class="flight-cabin">Economy</span>
+          <span class="flight-price">850 TL</span>
         </div>
       </div>
       
-      <div class="product-card">
-        <div class="product-image">👟</div>
-        <div class="product-info">
-          <div class="product-name">Arch Fit Paradyme</div>
-          <div class="product-price">
-            2.899 TL
-            <span class="product-old-price">3.499 TL</span>
+      <div class="flight-card">
+        <div class="flight-header">
+          <span class="flight-number">XQ456</span>
+          <span class="flight-duration">⏱️ 3s 45d</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-city">
+            <div class="route-city-name">IST</div>
+            <div class="route-time">14:00</div>
+            <div class="route-date">16 Ocak 2025</div>
+          </div>
+          <div class="route-arrow">✈️</div>
+          <div class="route-city">
+            <div class="route-city-name">LHR</div>
+            <div class="route-time">17:45</div>
+            <div class="route-date">16 Ocak 2025</div>
           </div>
         </div>
+        <div class="flight-info">
+          <span class="flight-cabin">Business</span>
+          <span class="flight-price">3,200 TL</span>
+        </div>
       </div>
       
-      <div class="product-card">
-        <div class="product-image">👟</div>
-        <div class="product-info">
-          <div class="product-name">Max Cushioning Elite</div>
-          <div class="product-price">3.199 TL</div>
+      <div class="flight-card">
+        <div class="flight-header">
+          <span class="flight-number">XQ789</span>
+          <span class="flight-duration">⏱️ 2s 30d</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-city">
+            <div class="route-city-name">AYT</div>
+            <div class="route-time">08:15</div>
+            <div class="route-date">17 Ocak 2025</div>
+          </div>
+          <div class="route-arrow">✈️</div>
+          <div class="route-city">
+            <div class="route-city-name">DXB</div>
+            <div class="route-time">10:45</div>
+            <div class="route-date">17 Ocak 2025</div>
+          </div>
+        </div>
+        <div class="flight-info">
+          <span class="flight-cabin">Economy</span>
+          <span class="flight-price">1,450 TL</span>
+        </div>
+      </div>
+      
+      <div class="flight-card">
+        <div class="flight-header">
+          <span class="flight-number">XQ234</span>
+          <span class="flight-duration">⏱️ 1s 20d</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-city">
+            <div class="route-city-name">IST</div>
+            <div class="route-time">16:30</div>
+            <div class="route-date">18 Ocak 2025</div>
+          </div>
+          <div class="route-arrow">✈️</div>
+          <div class="route-city">
+            <div class="route-city-name">ESB</div>
+            <div class="route-time">17:50</div>
+            <div class="route-date">18 Ocak 2025</div>
+          </div>
+        </div>
+        <div class="flight-info">
+          <span class="flight-cabin">Economy</span>
+          <span class="flight-price">650 TL</span>
         </div>
       </div>
 
-      <div class="product-card">
-        <div class="product-image">👟</div>
-        <div class="product-info">
-          <div class="product-name">Summits Brisbane</div>
-          <div class="product-price">2.199 TL</div>
+      <div class="flight-card">
+        <div class="flight-header">
+          <span class="flight-number">XQ567</span>
+          <span class="flight-duration">⏱️ 4s 15d</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-city">
+            <div class="route-city-name">IST</div>
+            <div class="route-time">09:00</div>
+            <div class="route-date">19 Ocak 2025</div>
+          </div>
+          <div class="route-arrow">✈️</div>
+          <div class="route-city">
+            <div class="route-city-name">CDG</div>
+            <div class="route-time">13:15</div>
+            <div class="route-date">19 Ocak 2025</div>
+          </div>
+        </div>
+        <div class="flight-info">
+          <span class="flight-cabin">Business</span>
+          <span class="flight-price">4,800 TL</span>
         </div>
       </div>
 
-      <div class="product-card">
-        <div class="product-image">👟</div>
-        <div class="product-info">
-          <div class="product-name">Skech-Air Ventura</div>
-          <div class="product-price">
-            1.999 TL
-            <span class="product-old-price">2.599 TL</span>
+      <div class="flight-card">
+        <div class="flight-header">
+          <span class="flight-number">XQ890</span>
+          <span class="flight-duration">⏱️ 1s 45d</span>
+        </div>
+        <div class="flight-route">
+          <div class="route-city">
+            <div class="route-city-name">AYT</div>
+            <div class="route-time">12:00</div>
+            <div class="route-date">20 Ocak 2025</div>
           </div>
+          <div class="route-arrow">✈️</div>
+          <div class="route-city">
+            <div class="route-city-name">IST</div>
+            <div class="route-time">13:45</div>
+            <div class="route-date">20 Ocak 2025</div>
+          </div>
+        </div>
+        <div class="flight-info">
+          <span class="flight-cabin">Economy</span>
+          <span class="flight-price">720 TL</span>
         </div>
       </div>
     </div>
   </section>
 
   <footer class="site-footer">
-    <p>© 2026 High5 Türkiye - Tüm hakları saklıdır</p>
-    <p style="margin-top: 1rem; font-size: 0.9rem;">Bu bir demo sayfasıdır. ShopAsist AI widget entegrasyonunu göstermek için oluşturulmuştur.</p>
+    <p>© 2026 SunExpress - Tüm hakları saklıdır</p>
+    <p style="margin-top: 1rem; font-size: 0.9rem;">Bu bir demo sayfasıdır. Flight Asist AI widget entegrasyonunu göstermek için oluşturulmuştur.</p>
   </footer>
 
-  <!-- ShopAsist AI Widget Integration - Müşteri buraya sadece bu kodu ekleyecek -->
+  <!-- Flight Asist AI Widget Integration - Müşteri buraya sadece bu kodu ekleyecek -->
   <script>
     // Widget Configuration
     window.ShopAsistConfig = {
-      siteId: 'high5',
+      siteId: 'sunexpress',
       apiUrl: 'http://localhost:3000'
     };
   </script>

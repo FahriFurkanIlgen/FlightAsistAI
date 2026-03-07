@@ -172,7 +172,7 @@ export class CacheService {
     return allFlights;
   }
 
-  public searchFlights(siteId: string, query: string, filters?: any): Flight[] {
+  public searchFlights(siteId: string, query: string): Flight[] {
     const flights = this.getFlights(siteId);
     if (!flights || !query) return [];
 

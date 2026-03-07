@@ -43,13 +43,21 @@ router.get('/:siteId/search', (req: Request, res: Response) => {
       });
     }
 
-    const flights = cacheService.searchFlights(siteId, q, {
-      from: from as string,
-      to: to as string,
-      date: date as string,
-      passengers: passengers ? parseInt(passengers as string) : undefined,
-      cabinClass: cabinClass as 'economy' | 'business' | 'first',
-    });
+    let flights = cacheService.searchFlights(siteId, q);
+    
+    // Apply filters if provided
+    if (from) {
+      flights = flights.filter(f => f.departure.city.toLowerCase().includes((from as string).toLowerCase()));
+    }
+    if (to) {
+      flights = flights.filter(f => f.arrival.city.toLowerCase().includes((to as string).toLowerCase()));
+    }
+    if (date) {
+      flights = flights.filter(f => f.departure.date === date);
+    }
+    if (cabinClass) {
+      flights = flights.filter(f => f.cabinClass === cabinClass);
+    }
 
     res.json({
       siteId,
