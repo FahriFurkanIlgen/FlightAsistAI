@@ -11,28 +11,30 @@ const tenantService = TenantService.getInstance();
 // In-memory config storage (in production, this would be in a database)
 const siteConfigs: Map<string, WidgetConfig> = new Map();
 
-// Initialize default config for high5
+// Initialize default config for SunExpress / FlightAsistAI
 const defaultHigh5Config: WidgetConfig = {
-  siteId: 'high5-tr',
-  siteName: process.env.SITE_NAME || 'High5 Türkiye',
-  primaryColor: '#000000',
-  secondaryColor: '#e31e24',
-  welcomeMessage: "Merhaba, High5 koleksiyonunda aradığınızı hızlıca bulalım.",
-  welcomeSubtext: 'Yeni sezon, kombinasyon önerileri ve sipariş desteği.',
+  siteId: 'sunexpress-tr',
+  siteName: process.env.SITE_NAME || 'SunExpress',
+  primaryColor: '#FFB900',
+  secondaryColor: '#FF6B00',
+  welcomeMessage: "Merhaba! SunExpress ile nereye uçmak istersiniz?",
+  welcomeSubtext: 'Popüler destinasyonlar, özel fırsatlar ve uçuş önerileri.',
   categories: [
-    { id: 'men', name: 'Erkek', emoji: '👨', keywords: ['erkek', 'men', 'male'] },
-    { id: 'women', name: 'Kadın', emoji: '👩', keywords: ['kadın', 'women', 'female'] },
-    { id: 'kids', name: 'Çocuk', emoji: '👶', keywords: ['kids', 'çocuk', 'children'] },
-    { id: 'sports', name: 'Spor', emoji: '⚽', keywords: ['sport', 'spor', 'athletic', 'running'] },
-    { id: 'casual', name: 'Günlük', emoji: '👞', keywords: ['casual', 'günlük', 'lifestyle'] },
+    { id: 'istanbul', name: 'İstanbul', emoji: '✈️', keywords: ['istanbul', 'ist', 'İstanbul', 'istanbul airport'] },
+    { id: 'antalya', name: 'Antalya', emoji: '🏖️', keywords: ['antalya', 'ayt', 'beach', 'resort', 'deniz'] },
+    { id: 'izmir', name: 'İzmir', emoji: '🌊', keywords: ['izmir', 'adb', 'aegean', 'ege'] },
+    { id: 'ankara', name: 'Ankara', emoji: '🏛️', keywords: ['ankara', 'esb', 'capital', 'başkent'] },
+    { id: 'bodrum', name: 'Bodrum', emoji: '⛵', keywords: ['bodrum', 'bjv', 'yacht', 'holiday', 'tatil'] },
   ],
-  privacyPolicyUrl: 'https://www.high5.com.tr/privacy-policy',
-  brandingText: 'Powered by ShopAsistAI',
+  privacyPolicyUrl: 'https://www.sunexpress.com/privacy-policy',
+  brandingText: 'Powered by FlightAsistAI',
   showBranding: true,
   queryParserVersion: 'v1', // Default to regex-only
 };
 
+// Support both old and new site IDs for compatibility
 siteConfigs.set('high5-tr', defaultHigh5Config);
+siteConfigs.set('sunexpress-tr', defaultHigh5Config);
 cacheService.setSiteConfig(defaultHigh5Config);
 
 // GET /api/config/:siteId - Get widget configuration

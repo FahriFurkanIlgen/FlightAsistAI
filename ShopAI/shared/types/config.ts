@@ -32,19 +32,20 @@ export interface ProductCategory {
 }
 
 export const DEFAULT_CONFIG: Partial<WidgetConfig> = {
-  primaryColor: '#4f46e5',
-  secondaryColor: '#10b981',
-  welcomeMessage: "Merhaba, {SITE_NAME} koleksiyonunda aradığınızı hızlıca bulalım.",
-  welcomeSubtext: 'Yeni sezon, kombinasyon önerileri ve sipariş desteği.',
+  primaryColor: '#FFB900',
+  secondaryColor: '#FF6B00',
+  welcomeMessage: "Merhaba! {SITE_NAME} ile uçuşunuzu bulalım.",
+  welcomeSubtext: 'Popüler destinasyonlar, uçuş önerileri ve rezervasyon desteği.',
   showBranding: true,
-  brandingText: 'Powered by ShopAsistAI',
+  brandingText: 'Powered by FlightAsistAI',
   queryParserVersion: 'v3',
 };
 
+// Popular flight destinations
 export const DEFAULT_CATEGORIES: ProductCategory[] = [
-  { id: 'shirt', name: 'Gömlek', emoji: '👔', keywords: ['shirt', 'gömlek', 'dress shirt'] },
-  { id: 'tshirt', name: 'Tişört', emoji: '👕', keywords: ['t-shirt', 'tişört', 'tee'] },
-  { id: 'pants', name: 'Pantolon', emoji: '👖', keywords: ['pants', 'pantolon', 'trousers'] },
-  { id: 'knitwear', name: 'Kazak', emoji: '🧶', keywords: ['sweater', 'kazak', 'knitwear', 'cardigan'] },
-  { id: 'accessories', name: 'Aksesuarlar', emoji: '👜', keywords: ['accessories', 'aksesuar', 'bag', 'wallet'] },
+  { id: 'istanbul', name: 'İstanbul', emoji: '✈️', keywords: ['istanbul', 'ist', 'İstanbul', 'istanbul airport'] },
+  { id: 'antalya', name: 'Antalya', emoji: '🏖️', keywords: ['antalya', 'ayt', 'beach', 'resort'] },
+  { id: 'izmir', name: 'İzmir', emoji: '🌊', keywords: ['izmir', 'adb', 'aegean', 'ege'] },
+  { id: 'ankara', name: 'Ankara', emoji: '🏛️', keywords: ['ankara', 'esb', 'capital', 'başkent'] },
+  { id: 'bodrum', name: 'Bodrum', emoji: '⛵', keywords: ['bodrum', 'bjv', 'yacht', 'holiday'] },
 ];

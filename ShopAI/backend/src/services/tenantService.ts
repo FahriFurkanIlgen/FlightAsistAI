@@ -28,6 +28,36 @@ export class TenantService {
    * Initialize default tenants for testing
    */
   private initializeDefaultTenants(): void {
+    // Default tenant: SunExpress (for flight search demo)
+    const sunexpressTenant: Tenant = {
+      id: 'tenant_sunexpress_tr',
+      apiKey: 'sk_test_sunexpress_tr_12345',
+      siteId: 'sunexpress-tr',
+      siteName: 'SunExpress',
+      domain: 'sunexpress.com',
+      feedUrl: process.env.FLIGHT_FEED_URL || 'https://example.com/flights-feed.xml',
+      brandLogo: 'https://www.sunexpress.com/assets/images/logo.svg',
+      primaryColor: '#FFB900',
+      secondaryColor: '#FF6B00',
+      welcomeMessage: 'Merhaba! {SITE_NAME} ile nereye uçmak istersiniz?',
+      welcomeSubtext: 'Popüler destinasyonlar ve özel fırsatlarımızı keşfedin.',
+      privacyPolicyUrl: 'https://www.sunexpress.com/tr/privacy-policy',
+      categories: [
+        { label: '✈️ İstanbul', keywords: ['istanbul', 'ist', 'İstanbul', 'istanbul airport'] },
+        { label: '🏖️ Antalya', keywords: ['antalya', 'ayt', 'beach', 'resort', 'deniz'] },
+        { label: '🌊 İzmir', keywords: ['izmir', 'adb', 'aegean', 'ege'] },
+        { label: '🏛️ Ankara', keywords: ['ankara', 'esb', 'capital', 'başkent'] },
+        { label: '⛵ Bodrum', keywords: ['bodrum', 'bjv', 'yacht', 'holiday', 'tatil'] },
+      ],
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      plan: 'pro',
+      monthlyQuota: 100000,
+      usedQuota: 0,
+    };
+
+    // Legacy e-commerce tenant (kept for backwards compatibility)
     const defaultTenant: Tenant = {
       id: 'tenant_high5_tr',
       apiKey: 'sk_test_high5_tr_12345',
@@ -55,6 +85,11 @@ export class TenantService {
       monthlyQuota: 100000,
       usedQuota: 0,
     };
+
+    // Register both tenants
+    this.tenants.set(sunexpressTenant.id, sunexpressTenant);
+    this.apiKeyIndex.set(sunexpressTenant.apiKey, sunexpressTenant.id);
+    this.siteIdIndex.set(sunexpressTenant.siteId, sunexpressTenant.id);
 
     this.tenants.set(defaultTenant.id, defaultTenant);
     this.apiKeyIndex.set(defaultTenant.apiKey, defaultTenant.id);
